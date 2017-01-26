@@ -1,0 +1,14 @@
+//
+//  GameViewController.h
+//  ObjC_Sample
+//
+//  Created by 株式会社ニジボックス on 2017/01/24.
+//  Copyright © 2017年 とますにこらす. All rights reserved.
+//
+
+#import <UIKit/UIKit.h>
+#import <GLKit/GLKit.h>
+
+@interface GameViewController : GLKViewController
+
+@end

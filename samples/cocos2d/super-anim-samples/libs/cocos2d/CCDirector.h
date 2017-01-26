@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2008-2010 Ricardo Quesada
  * Copyright (c) 2011 Zynga Inc.
+ * Copyright (c) 2013-2014 Cocos2D Authors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,315 +31,483 @@
 
 #import "CCProtocols.h"
 #import "Platforms/CCGL.h"
-#import "kazmath/mat4.h"
+#import "CCResponderManager.h"
+#import "CCRenderer.h"
+#import "CCDirectorView.h"
 
-/** @typedef ccDirectorProjection
- Possible OpenGL projections used by director
+/**
+ Possible OpenGL projections used by CCDirector.
  */
-typedef enum {
+typedef NS_ENUM(NSUInteger, CCDirectorProjection) {
 	/// sets a 2D projection (orthogonal projection).
-	kCCDirectorProjection2D,
+	CCDirectorProjection2D,
 
 	/// sets a 3D projection with a fovy=60, znear=0.5f and zfar=1500.
-	kCCDirectorProjection3D,
+	CCDirectorProjection3D,
 
 	/// it calls "updateProjection" on the projection delegate.
-	kCCDirectorProjectionCustom,
+	CCDirectorProjectionCustom,
 
 	/// Detault projection is 3D projection
-	kCCDirectorProjectionDefault = kCCDirectorProjection3D,
+	CCDirectorProjectionDefault = CCDirectorProjection2D,
 
-} ccDirectorProjection;
+};
 
 
-@class CCLabelAtlas;
+@class CCFPSLabel;
 @class CCScene;
 @class CCScheduler;
 @class CCActionManager;
+@class CCTransition;
 
-
-#ifdef __CC_PLATFORM_IOS
+#if __CC_PLATFORM_IOS
 #define CC_VIEWCONTROLLER UIViewController
-#elif defined(__CC_PLATFORM_MAC)
+#define CC_VIEW UIView
+
+#elif __CC_PLATFORM_MAC
 #define CC_VIEWCONTROLLER NSObject
+#define CC_VIEW NSOpenGLView
+
 #endif
 
-/**Class that creates and handle the main Window and manages how
-and when to execute the Scenes.
 
- The CCDirector is also resposible for:
-  - initializing the OpenGL ES context
-  - setting the OpenGL pixel format (default on is RGB565)
-  - setting the OpenGL buffer depth (default one is 0-bit)
+
+/** The director creates and handles the main Window and the Cocos2D view. It also presents Scenes and initiates scene updates and drawing.
+ 
+ CCDirector inherits from CC_VIEWCONTROLLER which is equivalent to UIViewController on iOS, and NSObject on OS X.
+
+ Since the CCDirector is a singleton, the standard way to use its methods and properties is:
+ 
+ - `[[CCDirector sharedDirector] methodName];`
+ - `[CCDirector sharedDirector].aProperty;`
+
+ The CCDirector is responsible for:
+ 
+  - initializing the OpenGL ES / Metal context
+  - setting the pixel format (default on is RGB565)
+  - setting the buffer depth (default one is 0-bit)
   - setting the projection (default one is 3D)
 
- Since the CCDirector is a singleton, the standard way to use it is by calling:
-  - [[CCDirector sharedDirector] methodName];
-
  The CCDirector also sets the default OpenGL context:
-  - GL_TEXTURE_2D is enabled
-  - GL_VERTEX_ARRAY is enabled
-  - GL_COLOR_ARRAY is enabled
-  - GL_TEXTURE_COORD_ARRAY is enabled
+ 
+  - `GL_TEXTURE_2D` is enabled
+  - `GL_VERTEX_ARRAY` is enabled
+  - `GL_COLOR_ARRAY` is enabled
+  - `GL_TEXTURE_COORD_ARRAY` is enabled
 */
 @interface CCDirector : CC_VIEWCONTROLLER
 {
 	// internal timer
-	NSTimeInterval animationInterval_;
-	NSTimeInterval oldAnimationInterval_;
+	NSTimeInterval _animationInterval;
+	NSTimeInterval _oldAnimationInterval;
 
 	/* stats */
-	BOOL	displayStats_;
+	BOOL	_displayStats;
 
-	NSUInteger frames_;
-	NSUInteger totalFrames_;
-	ccTime secondsPerFrame_;
+	NSUInteger _frames;
+	NSUInteger _totalFrames;
+	CCTime _secondsPerFrame;
 
-	ccTime		accumDt_;
-	ccTime		frameRate_;
-	CCLabelAtlas *FPSLabel_;
-	CCLabelAtlas *SPFLabel_;
-	CCLabelAtlas *drawsLabel_;
+	CCTime		_accumDt;
+	CCTime		_frameRate;
+	CCFPSLabel *_FPSLabel;
+	CCFPSLabel *_SPFLabel;
+	CCFPSLabel *_drawsLabel;
 
 	/* is the running scene paused */
-	BOOL isPaused_;
+	BOOL _isPaused;
     
     /* Is the director running */
-    BOOL isAnimating_;
+    BOOL _animating;
 
 	/* The running scene */
-	CCScene *runningScene_;
+	CCScene *_runningScene;
 
 	/* This object will be visited after the scene. Useful to hook a notification node */
-	id notificationNode_;
+	id _notificationNode;
 
 	/* will be the next 'runningScene' in the next frame
 	 nextScene is a weak reference. */
-	CCScene *nextScene_;
+	CCScene *_nextScene;
 
 	/* If YES, then "old" scene will receive the cleanup message */
-	BOOL	sendCleanupToScene_;
+	BOOL	_sendCleanupToScene;
 
 	/* scheduled scenes */
-	NSMutableArray *scenesStack_;
+	NSMutableArray *_scenesStack;
 
 	/* last time the main loop was updated */
-	struct timeval lastUpdate_;
+	struct timeval _lastUpdate;
 	/* delta time since last tick to main loop */
-	ccTime dt;
+	CCTime _dt;
 	/* whether or not the next delta time will be zero */
-	BOOL nextDeltaTimeZero_;
+	BOOL _nextDeltaTimeZero;
 
 	/* projection used */
-	ccDirectorProjection projection_;
-
-	/* CCDirector delegate */
-	id<CCDirectorDelegate>	delegate_;
+	CCDirectorProjection _projection;
 
 	/* window size in points */
-	CGSize	winSizeInPoints_;
+	CGSize	_winSizeInPoints;
 
 	/* window size in pixels */
-	CGSize	winSizeInPixels_;
-
-	/* the cocos2d running thread */
-	NSThread	*runningThread_;
+	CGSize	_winSizeInPixels;
 
 	/* scheduler associated with this director */
-	CCScheduler *scheduler_;
+	CCScheduler *_scheduler;
 
 	/* action manager associated with this director */
-	CCActionManager *actionManager_;
+	CCActionManager *_actionManager;
+
+    /* fixed timestep action manager associated with this director */
+    CCActionManager *_actionManagerFixed;
 	
-	/*  OpenGLView. On iOS it is a copy of self.view */
-	CCGLView		*view_;
+	NSMutableArray *_rendererPool;
+    
+@protected
+    GLKMatrix4 _projectionMatrix;
+    __weak id<CCDirectorDelegate> _delegate;
+    __weak NSThread *_runningThread;
 }
 
-/** returns the cocos2d thread.
- If you want to run any cocos2d task, run it in this thread.
- On iOS usually it is the main thread.
- @since v0.99.5
- */
-@property (readonly, nonatomic ) NSThread *runningThread;
-/** The current running Scene. Director can only run one Scene at the time */
-@property (nonatomic,readonly) CCScene* runningScene;
-/** The FPS value */
-@property (nonatomic,readwrite, assign) NSTimeInterval animationInterval;
-/** Whether or not to display director statistics */
-@property (nonatomic, readwrite, assign) BOOL displayStats;
-/** whether or not the next delta time will be zero */
-@property (nonatomic,readwrite,assign) BOOL nextDeltaTimeZero;
-/** Whether or not the Director is paused */
-@property (nonatomic,readonly) BOOL isPaused;
-/** Whether or not the Director is active (animating) */
-@property (nonatomic,readonly) BOOL isAnimating;
-/** Sets an OpenGL projection */
-@property (nonatomic,readwrite) ccDirectorProjection projection;
-/** How many frames were called since the director started */
-@property (nonatomic,readonly) NSUInteger	totalFrames;
-/** seconds per frame */
-@property (nonatomic, readonly) ccTime secondsPerFrame;
+// Undocumented members (considered private)
+@property ( nonatomic, strong ) CCResponderManager* responderManager;
+@property (nonatomic, readwrite, weak) id<CCDirectorDelegate> delegate;
 
-/** Whether or not the replaced scene will receive the cleanup message.
- If the new scene is pushed, then the old scene won't receive the "cleanup" message.
- If the new scene replaces the old one, the it will receive the "cleanup" message.
- @since v0.99.0
- */
-@property (nonatomic, readonly) BOOL sendCleanupToScene;
 
-/** This object will be visited after the main scene is visited.
- This object MUST implement the "visit" selector.
- Useful to hook a notification object, like CCNotifications (http://github.com/manucorporat/CCNotifications)
- @since v0.99.5
- */
-@property (nonatomic, readwrite, retain) id	notificationNode;
+/** @name Singleton Accessor */
 
-/** CCDirector delegate. It shall implemente the CCDirectorDelegate protocol
- @since v0.99.5
- */
-@property (nonatomic, readwrite, retain) id<CCDirectorDelegate> delegate;
-
-/** CCScheduler associated with this director
- @since v2.0
- */
-@property (nonatomic,readwrite,retain) CCScheduler *scheduler;
-
-/** CCActionManager associated with this director
- @since v2.0
- */
-@property (nonatomic,readwrite,retain) CCActionManager *actionManager;
-
-/** returns a shared instance of the director */
+/** @returns The shared director instance. */
 +(CCDirector*)sharedDirector;
 
+/** @name Accessing OpenGL Thread */
+
+/** If you want to run any Cocos2D task, run it in this thread. Any task that modifies Cocos2D's OpenGL state must be
+ executed on this thread due to OpenGL state changes only being allowed on the OpenGL thread.
+ 
+ @returns The Cocos2D thread, typically this will be the main thread. */
+@property (weak, readonly, nonatomic ) NSThread *runningThread;
 
 #pragma mark Director - Stats
 
-#pragma mark Director - Win Size
-/** returns the size of the OpenGL view in points */
-- (CGSize) winSize;
+#pragma mark Director - View Size
 
-/** returns the size of the OpenGL view in pixels.
- On Mac winSize and winSizeInPixels return the same value.
+/** @name View Scale */
+
+/** Content scaling factor. Sets the ratio of points to pixels. Default value is initalized from the content scale of the GL view used by the director.
+ @see UIScaleFactor
+ @see [UIView contentScaleFactor](https://developer.apple.com/library/ios/documentation/UIKit/Reference/UIView_Class/#//apple_ref/occ/instp/UIView/contentScaleFactor)
  */
-- (CGSize) winSizeInPixels;
+@property(nonatomic, assign) CGFloat contentScaleFactor;
 
-/** changes the projection size */
--(void) reshapeProjection:(CGSize)newWindowSize;
+/** UI scaling factor, default value is 1. Positions and content sizes are scale by this factor if the position type is set to scale.
+ @see contentScaleFactor
+ */
+@property (nonatomic,readwrite,assign) float UIScaleFactor;
 
-/** converts a UIKit coordinate to an OpenGL coordinate
- Useful to convert (multi) touchs coordinates to the current layout (portrait or landscape)
+/// User definable value that is used for default contentSizes of many node types (CCScene, CCNodeColor, etc).
+/// Defaults to the view size.
+@property(nonatomic, assign) CGSize designSize;
+
+
+/** @name Working with View and Projection */
+
+/// View used by the director for rendering. The CC_VIEW macro equals UIView on iOS, NSOpenGLView on OS X and CCGLView.
+/// @see CCDirectorView
+@property(nonatomic, strong) CC_VIEW<CCDirectorView> *view;
+/** Sets an OpenGL projection
+ @see CCDirectorProjection
+ @see projectionMatrix */
+@property (nonatomic, readwrite) CCDirectorProjection projection;
+/// Projection matrix used for rendering.
+/// @see projection
+@property(nonatomic, readonly) GLKMatrix4 projectionMatrix;
+
+/// Rect of the visible screen area in GL coordinates.
+@property(nonatomic, readonly) CGRect viewportRect;
+
+/* Sets the glViewport*/
+-(void) setViewport;
+
+/// The current global shader values values.
+@property(nonatomic, readonly) NSMutableDictionary *globalShaderUniforms;
+/** Whether or not to display statistics in the view's lower left corner. From top to bottom the numbers are:
+ number of draw calls, time per frame (in seconds), framerate (average over most recent frames).
+ @see totalFrames
+ @see secondsPerFrame */
+@property (nonatomic, readwrite, assign) BOOL displayStats;
+
+/** @returns The size of the view in points.
+ @see viewSizeInPixels */
+- (CGSize) viewSize;
+
+/** @returns The size of the view in pixels.
+ On Mac winSize and winSizeInPixels return the same value.
+ @see viewSize
+ */
+- (CGSize) viewSizeInPixels;
+
+/**
+ *  Changes the projection size.
+ *
+ *  @param newViewSize New projection size.
+ */
+-(void) reshapeProjection:(CGSize)newViewSize;
+
+/**
+ *  Converts a UIKit coordinate to an OpenGL coordinate.
+ *
+ *  Useful to convert (multi) touch coordinates to the current layout (portrait or landscape).
+ *
+ *  @param p Point to convert.
+ *
+ *  @return Converted point.
  */
 -(CGPoint) convertToGL: (CGPoint) p;
-/** converts an OpenGL coordinate to a UIKit coordinate
- Useful to convert node points to window points for calls such as glScissor
+
+/**
+ *  Converts an OpenGL coordinate to a UIKit coordinate.
+ *
+ *  Useful to convert node points to window points for calls such as glScissor.
+ *
+ *  @param p Point to convert.
+ *
+ *  @return Converted point.
  */
 -(CGPoint) convertToUI:(CGPoint)p;
 
-/// XXX: missing description
--(float) getZEye;
-
 #pragma mark Director - Scene Management
 
-/**Enters the Director's main loop with the given Scene.
- * Call it to run only your FIRST scene.
- * Don't call it if there is already a running scene.
+/** @name Presenting Scenes */
+
+/** The current running Scene. Director can only run one Scene at a time.
+ @see presentScene: */
+@property (nonatomic, readonly) CCScene* runningScene;
+
+/**
+ *  Presents a new scene.
  *
- * It will call pushScene: and then it will call startAnimation
+ *  If no scene is currently running, the scene will be started.
+ *  
+ *  If another scene is currently running, this scene will be stopped, and the new scene started.
+ *
+ *  @param scene Scene to start.
+ *  @see presentScene:withTransition:
  */
+- (void)presentScene:(CCScene *)scene;
+
+/**
+ *  Presents a new scene, with a transition.
+ *
+ *  If no scene is currently running, the new scene will be started without a transition.
+ *
+ *  If another scene is currently running, this scene will be stopped, and the new scene started, according to the provided transition.
+ *
+ *  @param scene Scene to start.
+ *  @param transition Transition to use. Can be nil.
+ *  @see presentScene:
+ */
+- (void)presentScene:(CCScene *)scene withTransition:(CCTransition *)transition;
+
+// purposefully undocumented: is the same as calling presentScene:
 - (void) runWithScene:(CCScene*) scene;
 
-/**Suspends the execution of the running scene, pushing it on the stack of suspended scenes.
- * The new scene will be executed.
+/**
+ * Suspends the execution of the running scene, pushing it on the stack of suspended scenes.
+ *
+ * The new scene will be executed, the previous scene remains in memory.
  * Try to avoid big stacks of pushed scenes to reduce memory allocation.
- * ONLY call it if there is a running scene.
+ *
+ *  @warning ONLY call it if there is already a running scene.
+ *
+ *  @param scene New scene to start.
+ *  @see pushScene:withTransition:
+ *  @see popScene
+ *  @see popToRootScene
  */
 - (void) pushScene:(CCScene*) scene;
 
-/**Pops out a scene from the queue.
- * This scene will replace the running one.
+/** Pops out a scene from the queue. This scene will replace the running one.
  * The running scene will be deleted. If there are no more scenes in the stack the execution is terminated.
- * ONLY call it if there is a running scene.
+ *
+ *  @warning ONLY call it if there is a running scene.
+ *
+ *  @see pushScene:
+ *  @see popSceneWithTransition:
+ *  @see popToRootScene
  */
 - (void) popScene;
 
 /**Pops out all scenes from the queue until the root scene in the queue.
+ *
  * This scene will replace the running one.
- * The running scene will be deleted. If there are no more scenes in the stack the execution is terminated.
- * ONLY call it if there is a running scene.
+ * Internally it will call `popToSceneStackLevel:1`
+ *  @see popScene
+ *  @see pushScene:
  */
 - (void) popToRootScene;
 
-/** Replaces the running scene with a new one. The running scene is terminated.
- * ONLY call it if there is a running scene.
+/**Pops out all scenes from the queue until the root scene in the queue, using a transition
+ *
+ * This scene will replace the running one. Internally it will call `popToRootScene`
+ * @param transition The transition to play.
+ *  @see popToRootScene
  */
+-(void) popToRootSceneWithTransition:(CCTransition *)transition;
+
+/* Pops out all scenes from the queue until it reaches `level`.
+ If level is 0, it will end the director.
+ If level is 1, it will pop all scenes until it reaches to root scene.
+ If level is <= than the current stack level, it won't do anything.
+ */
+-(void) popToSceneStackLevel:(NSUInteger)level;
+
+// purposefully undocumented: is the same as calling presentScene:
 -(void) replaceScene: (CCScene*) scene;
 
-/** Ends the execution, releases the running scene.
- It doesn't remove the OpenGL view from its parent. You have to do it manually.
- */
--(void) end;
+// purposefully undocumented: is the same as calling presentScene:withTransition:
+- (void)replaceScene:(CCScene *)scene withTransition:(CCTransition *)transition;
 
-/** Pauses the running scene.
- The running scene will be _drawed_ but all scheduled timers will be paused
- While paused, the draw rate will be 4 FPS to reduce CPU consuption
+/**
+ *  Pushes the running scene onto the scene stack, and presents the incoming scene, using a transition
+ *
+ *  @param scene      The scene to present
+ *  @param transition The transition to use
+ *  @see pushScene:
  */
--(void) pause;
+- (void)pushScene:(CCScene *)scene withTransition:(CCTransition *)transition;
 
-/** Resumes the paused scene
- The scheduled timers will be activated again.
- The "delta time" will be 0 (as if the game wasn't paused)
+/**
+ *  Replaces the running scene, with the last scene pushed to the stack, using a transition
+ *
+ *  @param transition The transition to use
+ *	@see popScene
  */
--(void) resume;
+- (void)popSceneWithTransition:(CCTransition *)transition;
 
-/** Stops the animation. Nothing will be drawn. The main loop won't be triggered anymore.
- If you wan't to pause your animation call [pause] instead.
- */
--(void) stopAnimation;
+- (void)startTransition:(CCTransition *)transition;
 
-/** The main loop is triggered again.
- Call this function only if [stopAnimation] was called earlier
- @warning Dont' call this function to start the main loop. To run the main loop call runWithScene
- */
--(void) startAnimation;
-
-/** Draw the scene.
+/* Draw the scene.
  This method is called every frame. Don't call it manually.
  */
 -(void) drawScene;
 
+/** @name Animating the Active Scene */
 
-// XXX: Hack. Should be placed on CCDirectorMac.h. Refactoring needed
-#if defined(__CC_PLATFORM_MAC)
-/** sets the openGL view */
--(void) setView:(CCGLView*)view;
+/** The animation interval is the time per frame. Typically specified as `1.0 / 60.0` where the latter number defines
+ the framerate. The lowest value is 0.0166 (1/60).
+ @see fixedUpdateInterval */
+@property (nonatomic, readwrite, assign) CCTime animationInterval;
+/** The fixed animation interval is used to run "fixed updates" at a fixed rate, independently of the framerate. Used primarly by the physics engine.
+ @see animationInterval */
+@property (nonatomic, readwrite, assign) CCTime fixedUpdateInterval;
+/** whether or not the next delta time will be zero */
+@property (nonatomic,readwrite,assign,getter=isNextDeltaTimeZero) BOOL nextDeltaTimeZero;
+/** Whether or not the Director is paused.
+ @see animating
+ @see pause
+ @see resume */
+@property (nonatomic, readonly,getter=isPaused) BOOL paused;
+/** Whether or not the Director is active (animating).
+ @see paused
+ @see startAnimation
+ @see stopAnimation */
+@property (nonatomic, readonly,getter=isAnimating) BOOL animating;
+/** How many frames were called since the director started
+ @see secondsPerFrame
+ @see displayStats */
+@property (nonatomic, readonly) NSUInteger totalFrames;
+/** Time it took to render the most recent frames, in seconds per frame.
+ @see totalFrames
+ @see displayStats */
+@property (nonatomic, readonly) CCTime secondsPerFrame;
 
-/** returns the OpenGL view */
--(CCGLView*) view;
-#endif
+/** Ends the execution, releases the running scene.
+ It doesn't remove the view from the view hierarchy. You have to do it manually.
+ */
+-(void) end;
+
+/** Pauses the running scene. All scheduled timers and actions will be paused.
+ When paused, the director refreshes the screen at a very low framerate (4 fps) to conserve battery power.
+ @see resume
+ */
+-(void) pause;
+
+/** Resumes the paused scene and its scheduled timers and actions.
+ The "delta time" will be set to 0 as if the game wasn't paused.
+ @see pause
+ @see nextDeltaTimeZero
+ */
+-(void) resume;
+
+/** Stops the animation. All scheduled updates and actions are effectively paused. 
+
+ When not animating, the director doesn't redraw the view at all. It is best to hide the view when not animating the director.
+ If you need to keep showing the director's view use pause instead.
+ 
+ @see startAnimation
+ */
+-(void) stopAnimation;
+
+/** Begins drawing the screen. Scheduled timers and actions will run.
+ 
+ @warning Don't call this function to start the main loop. To run the main loop call presentScene:
+ @see stopAnimation */
+-(void) startAnimation;
 
 #pragma mark Director - Memory Helper
 
-/** Removes all the cocos2d data that was cached automatically.
- It will purge the CCTextureCache, CCLabelBMFont cache.
- IMPORTANT: The CCSpriteFrameCache won't be purged. If you want to purge it, you have to purge it manually.
- @since v0.99.3
- */
+/** @name Purging Caches */
+
+/** Removes all the cocos2d resources that have been previously loaded and automatically cached, textures for instance. */
 -(void) purgeCachedData;
 
-// OpenGL Helper
+#pragma mark Internal stuff
 
-/** sets the OpenGL default values */
--(void) setGLDefaultValues;
-/** enables/disables OpenGL alpha blending */
-- (void) setAlphaBlending: (BOOL) on;
-/** enables/disables OpenGL depth test */
-- (void) setDepthTest: (BOOL) on;
+/* Whether or not the replaced scene will receive the cleanup message.
+ If the new scene is pushed, then the old scene won't receive the "cleanup" message.
+ If the new scene replaces the old one, the it will receive the "cleanup" message.
+ */
+@property (nonatomic, readonly) BOOL sendCleanupToScene;
 
-// helper
-/** creates the Stats labels */
+/* This object will be visited after the main scene is visited.
+ This object MUST implement the "visit" selector.
+ Useful to hook a notification object, like CCNotifications (http://github.com/manucorporat/CCNotifications)
+ */
+@property (nonatomic, readwrite, strong) id	notificationNode;
+
+/* CCScheduler associated with this director
+ */
+@property (nonatomic,readwrite,strong) CCScheduler *scheduler;
+
+/* CCActionManager associated with this director
+ */
+@property (nonatomic,readwrite,strong) CCActionManager *actionManager;
+
+/* CCFixedActionManager associated with this director
+ */
+@property (nonatomic,readwrite,strong) CCActionManager *actionManagerFixed;
+
+/// XXX: missing description
+-(float) getZEye;
+
+/// Get a renderer object to use for rendering.
+/// This method is thread safe.
+-(CCRenderer *)rendererFromPool;
+
+/// Return a renderer to a pool after rendering.
+/// This method is thread safe.
+-(void)poolRenderer:(CCRenderer *)renderer;
+
+/// Add a block to be called when the GPU finishes rendering a frame.
+/// This is used to pool rendering resources (renderers, buffers, textures, etc) without stalling the GPU pipeline.
+-(void)addFrameCompletionHandler:(dispatch_block_t)handler;
+
 -(void) createStatsLabel;
+
 @end
 
 // optimization. Should only be used to read it. Never to write it.
 extern NSUInteger __ccNumberOfDraws;
+
+// optimization. Should only be used to read it. Never to write it.
+extern CGFloat	__ccContentScaleFactor;

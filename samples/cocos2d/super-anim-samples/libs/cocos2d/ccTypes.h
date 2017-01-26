@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2008-2010 Ricardo Quesada
  * Copyright (c) 2011 Zynga Inc.
+ * Copyright (c) 2013-2014 Cocos2D Authors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,15 +33,24 @@
 #import <Foundation/Foundation.h>
 #import "ccMacros.h"
 
-#ifdef __CC_PLATFORM_IOS
+#if __CC_PLATFORM_IOS
 #import <CoreGraphics/CGGeometry.h>	// CGPoint
 #endif
+
+#if __CC_PLATFORM_IOS || __CC_PLATFORM_MAC
+#import <GLKit/GLKMath.h>
+#endif
+
 
 #import "Platforms/CCGL.h"
 
 /** RGB color composed of bytes 3 bytes
-@since v0.8
  */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct _ccColor3B
 {
 	GLubyte	r;
@@ -55,7 +65,8 @@ ccc3(const GLubyte r, const GLubyte g, const GLubyte b)
 	ccColor3B c = {r, g, b};
 	return c;
 }
-//ccColor3B predefined colors
+
+	//ccColor3B predefined colors
 //! White color (255,255,255)
 static const ccColor3B ccWHITE = {255,255,255};
 //! Yellow color (255,255,0)
@@ -76,7 +87,6 @@ static const ccColor3B ccORANGE = {255,127,0};
 static const ccColor3B ccGRAY = {166,166,166};
 
 /** RGBA color composed of 4 bytes
-@since v0.8
 */
 typedef struct _ccColor4B
 {
@@ -93,17 +103,21 @@ ccc4(const GLubyte r, const GLubyte g, const GLubyte b, const GLubyte o)
 	return c;
 }
 
+/** returns YES if both ccColor4F are equal. Otherwise it returns NO.
+ */
+static inline BOOL ccc4BEqual(ccColor4B a, ccColor4B b)
+{
+    return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
+}
 
 /** RGBA color composed of 4 floats
-@since v0.8
 */
-struct ccColor4F {
+typedef struct _ccColor4F {
 	GLfloat r;
 	GLfloat g;
 	GLfloat b;
 	GLfloat a;
-};
-typedef struct ccColor4F ccColor4F;
+} ccColor4F;
 
 //! helper that creates a ccColor4f type
 static inline ccColor4F ccc4f(const GLfloat r, const GLfloat g, const GLfloat b, const GLfloat a)
@@ -112,7 +126,6 @@ static inline ccColor4F ccc4f(const GLfloat r, const GLfloat g, const GLfloat b,
 }
 
 /** Returns a ccColor4F from a ccColor3B. Alpha will be 1.
- @since v0.99.1
  */
 static inline ccColor4F ccc4FFromccc3B(ccColor3B c)
 {
@@ -120,23 +133,57 @@ static inline ccColor4F ccc4FFromccc3B(ccColor3B c)
 }
 
 /** Returns a ccColor4F from a ccColor4B.
- @since v0.99.1
  */
 static inline ccColor4F ccc4FFromccc4B(ccColor4B c)
 {
 	return (ccColor4F){c.r/255.f, c.g/255.f, c.b/255.f, c.a/255.f};
 }
-
+	
 /** returns YES if both ccColor4F are equal. Otherwise it returns NO.
- @since v0.99.1
  */
 static inline BOOL ccc4FEqual(ccColor4F a, ccColor4F b)
 {
 	return a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
 }
+	
+/**
+ * Returns a ccColor4B from a ccColor4F.
+ */
+static inline ccColor4B ccc4BFromccc4F(ccColor4F c)
+{
+	return (ccColor4B){
+		(GLubyte)(clampf(c.r, 0, 1)*255),
+		(GLubyte)(clampf(c.g, 0, 1)*255),
+		(GLubyte)(clampf(c.b, 0, 1)*255),
+		(GLubyte)(clampf(c.a, 0, 1)*255)
+	};
+}
+	
+/**
+ * Returns a ccColor3B from a ccColor4F.
+ */
+static inline ccColor3B ccc3BFromccc4F(ccColor4F c)
+{
+	return (ccColor3B){
+		(GLubyte)(clampf(c.r, 0, 1)*255),
+		(GLubyte)(clampf(c.g, 0, 1)*255),
+		(GLubyte)(clampf(c.b, 0, 1)*255),
+	};
+}
+
+/**
+ * Returns a ccColor3B from a ccColor4F.
+ */
+static inline ccColor4F ccc4FInterpolated(ccColor4F start, ccColor4F end, float t)
+{
+	end.r = start.r + (end.r - start.r ) * t;
+	end.g = start.g	+ (end.g - start.g ) * t;
+	end.b = start.b + (end.b - start.b ) * t;
+	end.a = start.a	+ (end.a - start.a ) * t;
+	return  end;
+}
 
 /** A vertex composed of 2 GLfloats: x, y
- @since v0.8
  */
 typedef struct _ccVertex2F
 {
@@ -145,7 +192,6 @@ typedef struct _ccVertex2F
 } ccVertex2F;
 
 /** A vertex composed of 2 floats: x, y
- @since v0.8
  */
 typedef struct _ccVertex3F
 {
@@ -155,7 +201,6 @@ typedef struct _ccVertex3F
 } ccVertex3F;
 
 /** A texcoord composed of 2 floats: u, y
- @since v0.8
  */
 typedef struct _ccTex2F {
 	 GLfloat u;
@@ -187,21 +232,6 @@ typedef struct _ccQuad3 {
 	ccVertex3F		tl;
 	ccVertex3F		tr;
 } ccQuad3;
-
-//! A 2D grid size
-typedef struct _ccGridSize
-{
-	NSInteger	x;
-	NSInteger	y;
-} ccGridSize;
-
-//! helper function to create a ccGridSize
-static inline ccGridSize
-ccg(const NSInteger x, const NSInteger y)
-{
-	ccGridSize v = {x, y};
-	return v;
-}
 
 //! a Point with a vertex point, a tex coord point and a color 4B
 typedef struct _ccV2F_C4B_T2F
@@ -264,7 +294,19 @@ typedef struct _ccV3F_C4B_T2F
 	ccTex2F			texCoords;			// 8 byts
 } ccV3F_C4B_T2F;
 
-//! 4 ccVertex2FTex2FColor4B Quad
+	
+//! A Triangle of ccV2F_C4B_T2F 
+typedef struct _ccV2F_C4B_T2F_Triangle
+{
+	//! Point A
+	ccV2F_C4B_T2F a;
+	//! Point B
+	ccV2F_C4B_T2F b;
+	//! Point B
+	ccV2F_C4B_T2F c;
+} ccV2F_C4B_T2F_Triangle;
+	
+//! A Quad of ccV2F_C4B_T2F
 typedef struct _ccV2F_C4B_T2F_Quad
 {
 	//! bottom left
@@ -312,63 +354,171 @@ typedef struct _ccBlendFunc
 	GLenum dst;
 } ccBlendFunc;
 
-//! ccResolutionType
-typedef enum
+static const ccBlendFunc kCCBlendFuncDisable = {GL_ONE, GL_ZERO};
+
+// XXX: If any of these enums are edited and/or reordered, update CCTexture2D.m
+/// Vertical text alignment type. Used by CCLabelTTF and CCButton.
+typedef NS_ENUM(NSUInteger, CCVerticalTextAlignment)
 {
-	//! Unknonw resolution type
-	kCCResolutionUnknown,
-#ifdef __CC_PLATFORM_IOS
-	//! iPhone resolution type
-	kCCResolutioniPhone,
-	//! RetinaDisplay resolution type
-	kCCResolutioniPhoneRetinaDisplay,
-	//! iPad resolution type
-	kCCResolutioniPad,
-	//! iPad Retina Display resolution type
-	kCCResolutioniPadRetinaDisplay,
-	
-#elif defined(__CC_PLATFORM_MAC)
-	//! Mac resolution type
-	kCCResolutionMac,
+    /** Top aligned */
+    CCVerticalTextAlignmentTop,
+    /** Center aligned */
+    CCVerticalTextAlignmentCenter,
+    /** Bottom aligned */
+    CCVerticalTextAlignmentBottom,
+};
 
-	//! Mac RetinaDisplay resolution type (???)
-	kCCResolutionMacRetinaDisplay,
-#endif // platform
-
-} ccResolutionType;
-
-// XXX: If any of these enums are edited and/or reordered, udpate CCTexture2D.m
-//! Vertical text alignment type
-typedef enum
+// XXX: If any of these enums are edited and/or reordered, update CCTexture2D.m
+// NOTE: changed enum from 'unsigned char' to 'uint8_t' because appledoc v2 apparently doesn't handle enum types with a space in between them (creates an enum named 'comma')
+/// Horizontal text alignment type. Used by the label nodes CCLabelTTF and CCLabelBMFont.
+typedef NS_ENUM(uint8_t, CCTextAlignment)
 {
-    kCCVerticalTextAlignmentTop,
-    kCCVerticalTextAlignmentCenter,
-    kCCVerticalTextAlignmentBottom,
-} CCVerticalTextAlignment;
+    /** Left aligned */
+	CCTextAlignmentLeft,
+    /** Center aligned */
+	CCTextAlignmentCenter,
+    /** Right aligned */
+	CCTextAlignmentRight,
+};
 
-// XXX: If any of these enums are edited and/or reordered, udpate CCTexture2D.m
-//! Horizontal text alignment type
-typedef enum
-{
-	kCCTextAlignmentLeft,
-	kCCTextAlignmentCenter,
-	kCCTextAlignmentRight,
-} CCTextAlignment;
-
-// XXX: If any of these enums are edited and/or reordered, udpate CCTexture2D.m
+// XXX: If any of these enums are edited and/or reordered, update CCTexture2D.m
 //! Line break modes
-typedef enum {
-	kCCLineBreakModeWordWrap,
-	kCCLineBreakModeCharacterWrap,
-	kCCLineBreakModeClip,
-	kCCLineBreakModeHeadTruncation,
-	kCCLineBreakModeTailTruncation,
-	kCCLineBreakModeMiddleTruncation
-} CCLineBreakMode;
+    /*
+typedef NS_ENUM(NSUInteger, CCLineBreakMode)
+{
+	CCLineBreakModeWordWrap,
+	CCLineBreakModeCharacterWrap,
+	CCLineBreakModeClip,
+	CCLineBreakModeHeadTruncation,
+	CCLineBreakModeTailTruncation,
+	CCLineBreakModeMiddleTruncation
+};*/
 
-//! delta time type
-//! if you want more resolution redefine it as a double
-typedef float ccTime;
-//typedef double ccTime;
+/// delta time type
+typedef double CCTime;
 
-typedef float ccMat4[16];
+//typedef float CCMat4[16];
+
+// NOTE: changed enum from 'unsigned char' to 'uint8_t' because appledoc v2 apparently doesn't handle enum types with a space in between them (creates an enum named 'comma')
+/** Position unit types alter how a node's position property values are interpreted. Used by, for instance, [CCNode setPositionType:]. */
+typedef NS_ENUM(uint8_t, CCPositionUnit)
+{
+    /// Position is set in points (this is the default)
+    CCPositionUnitPoints,
+    
+    /// Position is UI points, on iOS this corresponds to the native point system
+    CCPositionUnitUIPoints,
+    
+    /// Position is a normalized value multiplied by the content size of the parent's container
+    CCPositionUnitNormalized,
+    
+};
+
+// NOTE: changed enum from 'unsigned char' to 'uint8_t' because appledoc v2 apparently doesn't handle enum types with a space in between them (creates an enum named 'comma')
+/** Size unit types alter how a node's contentSize property values are interpreted. Used by, for instance, [CCNode setContentSizeType:]. */
+typedef NS_ENUM(uint8_t, CCSizeUnit)
+{
+    /// Content size is set in points (this is the default)
+    CCSizeUnitPoints,
+    
+    /// Position is UI points, on iOS this corresponds to the native point system
+    CCSizeUnitUIPoints,
+    
+    /// Content size is a normalized value (percentage) multiplied by the content size of the parent's container
+    CCSizeUnitNormalized,
+    
+    /// Content size is the size of the parents container inset by the supplied value
+    CCSizeUnitInsetPoints,
+    
+    /// Content size is the size of the parents container inset by the supplied value multiplied by the UIScaleFactor (as defined by CCDirector)
+    CCSizeUnitInsetUIPoints,
+    
+};
+    
+// NOTE: changed enum from 'unsigned char' to 'uint8_t' because appledoc v2 apparently doesn't handle enum types with a space in between them (creates an enum named 'comma')
+/** Reference corner determines a node's origin and affects how the position property values are interpreted. Used by, for instance, [CCNode setPositionType:]. */
+typedef NS_ENUM(uint8_t, CCPositionReferenceCorner)
+{
+    /// Position is relative to the bottom left corner of the parent container (this is the default)
+    CCPositionReferenceCornerBottomLeft,
+    
+    /// Position is relative to the top left corner of the parent container
+    CCPositionReferenceCornerTopLeft,
+    
+    /// Position is relative to the top right corner of the parent container
+    CCPositionReferenceCornerTopRight,
+    
+    /// Position is relative to the bottom right corner of the parent container
+    CCPositionReferenceCornerBottomRight,
+    
+};
+
+/** Position type compines CCPositionUnit and CCPositionReferenceCorner. */
+typedef struct _CCPositionType
+{
+    CCPositionUnit xUnit;
+    CCPositionUnit yUnit;
+    CCPositionReferenceCorner corner;
+} CCPositionType;
+
+/** Position type compines CCSizeUnit. */
+typedef struct _CCSizeType
+{
+    CCSizeUnit widthUnit;
+    CCSizeUnit heightUnit;
+} CCSizeType;
+
+//! helper that creates a CCPositionType type
+static inline CCPositionType CCPositionTypeMake(CCPositionUnit xUnit, CCPositionUnit yUnit, CCPositionReferenceCorner corner)
+{
+    CCPositionType pt;
+    pt.xUnit = xUnit;
+    pt.yUnit = yUnit;
+    pt.corner = corner;
+    return pt;
+}
+
+//! helper that creates a CCContentSizeType type
+static inline CCSizeType CCSizeTypeMake(CCSizeUnit widthUnit, CCSizeUnit heightUnit)
+{
+    CCSizeType cst;
+    cst.widthUnit = widthUnit;
+    cst.heightUnit = heightUnit;
+    return cst;
+}
+
+static const CCPositionType CCPositionTypePoints = {CCPositionUnitPoints, CCPositionUnitPoints, CCPositionReferenceCornerBottomLeft};
+static const CCPositionType CCPositionTypeUIPoints = {CCPositionUnitUIPoints, CCPositionUnitUIPoints, CCPositionReferenceCornerBottomLeft};
+static const CCPositionType CCPositionTypeNormalized = {CCPositionUnitNormalized, CCPositionUnitNormalized, CCPositionReferenceCornerBottomLeft};
+
+
+static const CCSizeType CCSizeTypePoints = {CCSizeUnitPoints, CCSizeUnitPoints};
+static const CCSizeType CCSizeTypeUIPoints = {CCSizeUnitUIPoints, CCSizeUnitUIPoints};
+static const CCSizeType CCSizeTypeNormalized = {CCSizeUnitNormalized, CCSizeUnitNormalized};
+
+// NOTE: changed enum from 'char' to 'int8_t' for consistency with above enums that had to be renamed from "unsigned char" due to an appledoc bug
+/** Scale types alter how a node's scale property values are interpreted. Used by, for instance, [CCNode setScaleType:]. */
+typedef NS_ENUM(int8_t, CCScaleType) {
+    /** Scale is assumed to be in points */
+    CCScaleTypePoints,
+    /** Scale is assumed to be in UI points */
+    CCScaleTypeScaled,
+};
+    
+static inline BOOL CCPositionTypeIsBasicPoints(CCPositionType type)
+{
+    return (type.xUnit == CCPositionUnitPoints
+            && type.yUnit == CCPositionUnitPoints
+            && type.corner == CCPositionReferenceCornerBottomLeft);
+}
+
+static inline BOOL CCSizeTypeIsBasicPoints(CCSizeType type)
+{
+    return (type.widthUnit == CCSizeUnitPoints
+            && type.heightUnit == CCSizeUnitPoints);
+}
+    
+#ifdef __cplusplus
+}
+#endif
+

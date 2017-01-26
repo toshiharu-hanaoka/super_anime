@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2010 Ricardo Quesada
  * Copyright (c) 2011 Zynga Inc.
+ * Copyright (c) 2013-2014 Cocos2D Authors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,23 +31,77 @@
 // Only compile this code on Mac. These files should not be included on your iOS project.
 // But in case they are included, it won't be compiled.
 #import "../../ccMacros.h"
-#ifdef __CC_PLATFORM_MAC
+#if __CC_PLATFORM_MAC
 
 #import "../../Platforms/CCGL.h"
 #import "CCGLView.h"
 #import "CCDirectorMac.h"
-#import "CCEventDispatcher.h"
 #import "../../ccConfig.h"
 #import "../../ccMacros.h"
 
+@interface CCGLViewFence : NSObject
 
-@implementation CCGLView
+/// Is the fence ready to be inserted?
+@property(nonatomic, readonly) BOOL isReady;
+@property(nonatomic, readonly) BOOL isCompleted;
 
-@synthesize eventDelegate = eventDelegate_;
+/// List of completion handlers to be called when the fence completes.
+@property(nonatomic, readonly, strong) NSMutableArray *handlers;
 
-+(void) load_
+@end
+
+
+@implementation CCGLViewFence {
+	GLsync _fence;
+	BOOL _invalidated;
+}
+
+-(instancetype)init
 {
-	CCLOG(@"%@ loaded", self);
+	if((self = [super init])){
+		_handlers = [NSMutableArray array];
+	}
+	
+	return self;
+}
+
+-(void)insertFence
+{
+	_fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+	
+	CC_CHECK_GL_ERROR_DEBUG();
+}
+
+-(BOOL)isReady
+{
+	// If there is a GL fence assigned, then the fence is waiting on it and not ready.
+	return (_fence == NULL);
+}
+
+-(BOOL)isComplete
+{
+	if(_fence){
+		if(glClientWaitSync(_fence, GL_SYNC_FLUSH_COMMANDS_BIT, 0) == GL_ALREADY_SIGNALED){
+			glDeleteSync(_fence);
+			_fence = NULL;
+			
+			CC_CHECK_GL_ERROR_DEBUG();
+			return YES;
+		} else {
+			// Fence is still waiting
+			return NO;
+		}
+	} else {
+		// Fence has completed previously.
+		return YES;
+	}
+}
+
+@end
+
+
+@implementation CCGLView {
+	NSMutableArray *_fences;
 }
 
 - (id) initWithFrame:(NSRect)frameRect
@@ -78,13 +133,11 @@
 	if (!pixelFormat)
 		CCLOG(@"No OpenGL pixel format");
 
-	if( (self = [super initWithFrame:frameRect pixelFormat:[pixelFormat autorelease]]) ) {
+	if( (self = [super initWithFrame:frameRect pixelFormat:pixelFormat]) ) {
 
 		if( context )
 			[self setOpenGLContext:context];
 
-		// event delegate
-		eventDelegate_ = nil;
 	}
 
 	return self;
@@ -109,7 +162,7 @@
 	// Synchronize buffer swaps with vertical refresh rate
 	GLint swapInt = 1;
 	[[self openGLContext] setValues:&swapInt forParameter:NSOpenGLCPSwapInterval];	
-
+	
 //	GLint order = -1;
 //	[[self openGLContext] setValues:&order forParameter:NSOpenGLCPSurfaceOrder];
 }
@@ -127,13 +180,16 @@
 
 	[self lockOpenGLContext];
 
-	NSRect rect = [self bounds];
+	NSRect rect = [self convertRectToBacking:self.bounds];
 
 	CCDirector *director = [CCDirector sharedDirector];
 	[director reshapeProjection: NSSizeToCGSize(rect.size) ];
 
 	// avoid flicker
-	[director drawScene];
+  // Only draw if there is something to draw, otherwise it actually creates a flicker of the current glClearColor
+	if(director.runningScene){
+    [director drawScene];
+  }
 //	[self setNeedsDisplay:YES];
 	
 	[self unlockOpenGLContext];
@@ -157,133 +213,154 @@
 	CGLUnlockContext([glContext CGLContextObj]);
 }
 
+// Find or make a fence that is ready to use.
+-(CCGLViewFence *)getReadyFence
+{
+	// First checkf oldest (first in the array) fence is ready again.
+	CCGLViewFence *fence = _fences.firstObject;;
+	if(fence.isReady){
+		// Remove the fence so it can be inserted at the end of the queue again.
+		[_fences removeObjectAtIndex:0];
+		return fence;
+	} else {
+		// No existing fences ready. Make a new one.
+		return [[CCGLViewFence alloc] init];
+	}
+}
+
+-(void)addFrameCompletionHandler:(dispatch_block_t)handler
+{
+	if(_fences == nil){
+		_fences = [NSMutableArray arrayWithObject:[[CCGLViewFence alloc] init]];
+	}
+	
+	CCGLViewFence *fence = _fences.lastObject;
+	if(!fence.isReady){
+		fence = [self getReadyFence];
+		[_fences addObject:fence];
+	}
+	
+	[fence.handlers addObject:handler];
+}
+
+-(void)beginFrame
+{
+	[self lockOpenGLContext];
+}
+
+-(void)presentFrame
+{
+	{
+		CCGLViewFence *fence = _fences.lastObject;
+		if(fence.isReady){
+			// If the fence is ready to be added, insert a sync point for it.
+			[fence insertFence];
+		}
+	}
+	
+	[self.openGLContext flushBuffer];
+	
+	// Check the fences for completion.
+	for(CCGLViewFence *fence in _fences){
+		if(fence.isComplete){
+			for(dispatch_block_t handler in fence.handlers) handler();
+			[fence.handlers removeAllObjects];
+		} else {
+			break;
+		}
+	}
+	
+	[self unlockOpenGLContext];
+}
+
+-(GLuint)fbo
+{
+	return 0;
+}
+
 - (void) dealloc
 {
 	CCLOGINFO(@"cocos2d: deallocing %@", self);
-
-	[super dealloc];
 }
 
-#define DISPATCH_EVENT(__event__, __selector__)												\
-	id obj = eventDelegate_;																\
-	CCEventObject *event = [[CCEventObject alloc] init];									\
-	event->event = [__event__ retain];														\
-	event->selector = __selector__;															\
-	[obj performSelector:@selector(dispatchEvent:)											\
-			onThread:[[CCDirector sharedDirector] runningThread]							\
-		  withObject:event																	\
-	   waitUntilDone:NO];																	\
-	[event release];
-
-#pragma mark CCGLView - Mouse events
+#pragma mark CCGLView - Mouse Delegate
 
 - (void)mouseDown:(NSEvent *)theEvent
 {
-	DISPATCH_EVENT(theEvent, _cmd);
-}
-
-- (void)mouseMoved:(NSEvent *)theEvent
-{
-	DISPATCH_EVENT(theEvent, _cmd);
+    // dispatch mouse to responder manager
+    [[CCDirector sharedDirector].responderManager mouseDown:theEvent];
 }
 
 - (void)mouseDragged:(NSEvent *)theEvent
 {
-	DISPATCH_EVENT(theEvent, _cmd);
+    // dispatch mouse to responder manager
+    [[CCDirector sharedDirector].responderManager mouseDragged:theEvent];
 }
 
 - (void)mouseUp:(NSEvent *)theEvent
 {
-	DISPATCH_EVENT(theEvent, _cmd);
+    // dispatch mouse to responder manager
+    [[CCDirector sharedDirector].responderManager mouseUp:theEvent];
 }
 
-- (void)rightMouseDown:(NSEvent *)theEvent {
-	DISPATCH_EVENT(theEvent, _cmd);
-}
-
-- (void)rightMouseDragged:(NSEvent *)theEvent {
-	DISPATCH_EVENT(theEvent, _cmd);
-}
-
-- (void)rightMouseUp:(NSEvent *)theEvent {
-	DISPATCH_EVENT(theEvent, _cmd);
-}
-
-- (void)otherMouseDown:(NSEvent *)theEvent {
-	DISPATCH_EVENT(theEvent, _cmd);
-}
-
-- (void)otherMouseDragged:(NSEvent *)theEvent {
-	DISPATCH_EVENT(theEvent, _cmd);
-}
-
-- (void)otherMouseUp:(NSEvent *)theEvent {
-	DISPATCH_EVENT(theEvent, _cmd);
-}
-
-- (void)mouseEntered:(NSEvent *)theEvent {
-	DISPATCH_EVENT(theEvent, _cmd);
-}
-
-- (void)mouseExited:(NSEvent *)theEvent {
-	DISPATCH_EVENT(theEvent, _cmd);
-}
-
--(void) scrollWheel:(NSEvent *)theEvent {
-	DISPATCH_EVENT(theEvent, _cmd);
-}
-
-#pragma mark CCGLView - Key events
-
--(BOOL) becomeFirstResponder
+- (void)mouseMoved:(NSEvent *)theEvent
 {
-	return YES;
+    // dispatch mouse to responder manager
+    [[CCDirector sharedDirector].responderManager mouseMoved:theEvent];
 }
 
--(BOOL) acceptsFirstResponder
+- (void)mouseEntered:(NSEvent *)theEvent
 {
-	return YES;
+    // dispatch mouse to responder manager
+    [[CCDirector sharedDirector].responderManager mouseEntered:theEvent];
 }
 
--(BOOL) resignFirstResponder
+- (void)mouseExited:(NSEvent *)theEvent
 {
-	return YES;
+    // dispatch mouse to responder manager
+    [[CCDirector sharedDirector].responderManager mouseExited:theEvent];
 }
 
-- (void)keyDown:(NSEvent *)theEvent
+- (void)rightMouseDown:(NSEvent *)theEvent
 {
-	DISPATCH_EVENT(theEvent, _cmd);
+    // dispatch mouse to responder manager
+    [[CCDirector sharedDirector].responderManager rightMouseDown:theEvent];
 }
 
-- (void)keyUp:(NSEvent *)theEvent
+- (void)rightMouseDragged:(NSEvent *)theEvent
 {
-	DISPATCH_EVENT(theEvent, _cmd);
+    // dispatch mouse to responder manager
+    [[CCDirector sharedDirector].responderManager rightMouseDragged:theEvent];
 }
 
-- (void)flagsChanged:(NSEvent *)theEvent
+- (void)rightMouseUp:(NSEvent *)theEvent
 {
-	DISPATCH_EVENT(theEvent, _cmd);
+    // dispatch mouse to responder manager
+    [[CCDirector sharedDirector].responderManager rightMouseUp:theEvent];
 }
 
-#pragma mark CCGLView - Touch events
-- (void)touchesBeganWithEvent:(NSEvent *)theEvent
+- (void)otherMouseDown:(NSEvent *)theEvent
 {
-	DISPATCH_EVENT(theEvent, _cmd);
+    // dispatch mouse to responder manager
+    [[CCDirector sharedDirector].responderManager otherMouseDown:theEvent];
 }
 
-- (void)touchesMovedWithEvent:(NSEvent *)theEvent
+- (void)otherMouseDragged:(NSEvent *)theEvent
 {
-	DISPATCH_EVENT(theEvent, _cmd);
+    // dispatch mouse to responder manager
+    [[CCDirector sharedDirector].responderManager otherMouseDragged:theEvent];
 }
 
-- (void)touchesEndedWithEvent:(NSEvent *)theEvent
+- (void)otherMouseUp:(NSEvent *)theEvent
 {
-	DISPATCH_EVENT(theEvent, _cmd);
+    // dispatch mouse to responder manager
+    [[CCDirector sharedDirector].responderManager otherMouseUp:theEvent];
 }
 
-- (void)touchesCancelledWithEvent:(NSEvent *)theEvent
+- (void)scrollWheel:(NSEvent *)theEvent
 {
-	DISPATCH_EVENT(theEvent, _cmd);
+    // dispatch mouse to responder manager
+    [[CCDirector sharedDirector].responderManager scrollWheel:theEvent];
 }
 
 @end

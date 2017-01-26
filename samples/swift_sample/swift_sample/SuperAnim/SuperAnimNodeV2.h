@@ -23,106 +23,73 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 //
-#ifndef SuperAnimNode_H
-#define SuperAnimNode_H
+#import "cocos2d.h"
 
-#import <GLKit/GLKit.h>
-#import <SpriteKit/SpriteKit.h>
-#include "SuperAnimCommon.h"
+@protocol SuperAnimNodeListener <NSObject>
 
-//#include "cocos2d.h"
-//using namespace cocos2d;
+-(void) OnAnimSectionEnd: (int)theId label:(NSString*) theLabelName;
+-(void) OnTimeEvent:(int) theId label:(NSString*)theLabelName eventId:(int) theEventId;
 
-namespace SuperAnim
+@end
+
+@interface SuperAnimNode : CCNode
 {
-	class SuperAnimNodeListener
-	{
-	public:
-		virtual void OnAnimSectionEnd(int theId, std::string theLabelName){}
-		virtual void OnTimeEvent(int theId, std::string theLabelName, int theEventId){}
-	};
+	int mId;
+	id<SuperAnimNodeListener> mListener;
+	void *mAnimHandler;
+	void *mReplacedSpriteMap;
+	BOOL mIsLoop;
+	// for time event
+	void *mLabelNameToTimeEventInfoArrayMap;
+	void *mCurTimeEventInfoArray;
+	int mAnimState;
+	// support sprite sheet
+	NSString* mSpriteSheetFileFullPath;
+	BOOL mUseSpriteSheet;
+	CCTexture2D* mSpriteSheet;
+	BOOL mIsFlipX;
+	BOOL mIsFlipY;
+	float mSpeedFactor;
+}
+@property (nonatomic,readwrite) BOOL flipX;
+@property (nonatomic,readwrite) BOOL flipY;
+@property (nonatomic,readwrite) float speedFactor;
 
-    //class SuperAnimNode : public CCNode
-    class SuperAnimNode
-	{
-	private:
-		int mId;
-		SuperAnimNodeListener *mListener;
-		SuperAnimHandler mAnimHandler;
-		bool mIsLoop;
-		int mAnimState;
-		// support sprite sheet
-		std::string mSpriteSheetFileFullPath;
-		bool mUseSpriteSheet;
-		//CCTexture2D* mSpriteSheet;
-        SKTextureAtlas* mSpriteSheet;
-		bool mIsFlipX;
-		bool mIsFlipY;
-		float mSpeedFactor;
-		
-		
-		typedef std::map<SuperAnimSpriteId, SuperAnimSpriteId> SuperSpriteIdToSuperSpriteIdMap;
-		SuperSpriteIdToSuperSpriteIdMap mReplacedSpriteMap;
-		
-		// for time event
-		struct TimeEventInfo{
-			std::string mLabelName;
-			float mTimeFactor;
-			int mEventId;
-		};
-		typedef std::vector<TimeEventInfo> TimeEventInfoArray;
-		typedef std::map<std::string, TimeEventInfoArray> LabelNameToTimeEventInfoArrayMap;
-		LabelNameToTimeEventInfoArrayMap mLabelNameToTimeEventInfoArrayMap;
-		TimeEventInfoArray mCurTimeEventInfoArray;
-	public:
-		SuperAnimNode();
-		~SuperAnimNode();
-		static SuperAnimNode *create(std::string theAbsAnimFile, int theId, SuperAnimNodeListener *theListener);
++(id) create:(NSString*) theAbsAnimFile id:(int) theId listener:(id<SuperAnimNodeListener>) theListener;
+-(id) initWithAnimFile:(NSString*) theAbsAnimFile id:(int) theId listener:(id<SuperAnimNodeListener>) theListener;
+-(void)dealloc;
+-(void) update: (ccTime) time;
+-(BOOL) PlaySection:(NSString*)	theLabel isLoop:(BOOL) isLoop;
+-(void) Pause;
+-(void) Resume;
+-(BOOL) IsPause;
+-(BOOL) IsPlaying;
+-(int) GetCurFrame;
+-(NSString*) GetCurSectionName;
+-(BOOL) HasSection:(NSString*) theLabelName;
+// for replaceable sprite
+-(void) replaceSprite:(NSString*) theOriginSpriteName newSpriteName:(NSString*) theNewSpriteName;
+-(void) resumeSprite:(NSString*) theOriginSpriteName;
 
-		bool Init(std::string theAbsAnimFile, int theId, SuperAnimNodeListener *theListener);
-		void draw();
-		void update(float dt);
-		void setFlipX(bool isFlip);
-		void setFlipY(bool isFlip);
+// for time event
+// theTimeFactor is in [0.0f, 1.0f],
+// theTimeFactor = 0.0f means the event will be triggered at the first frame,
+// theTimeFactor = 1.0f means the event will be triggered at the last frame
+-(void) registerTimeEvent:(NSString*)theLabel timeFactor:(float)theTimeFactor timeEventId:(int)theEventId;
+-(void) removeTimeEvent:(NSString*) theLabel timeEventId:(int) theEventId;
 
-		bool PlaySection(const std::string &theLabel, bool isLoop = false);
-		void Pause();
-		void Resume();
-		bool IsPause();
-		bool IsPlaying();
-		int GetCurFrame();
-		int GetId();
-		std::string GetCurSectionName();
-		bool HasSection(const std::string &theLabelName);
-		void setSpeedFactor(float theNewSpeedFactor);
-		
-		// for replaceable sprite
-		void replaceSprite(const std::string &theOriginSpriteName, const std::string &theNewSpriteName);
-		void resumeSprite(const std::string &theOriginSpriteName);
-		
-		// for time event
-		// theTimeFactor is in [0.0f, 1.0f],
-		// theTimeFactor = 0.0f means the event will be triggered at the first frame,
-		// theTimeFactor = 1.0f means the event will be triggered at the last frame
-		void registerTimeEvent(const std::string &theLabel, float theTimeFactor, int theEventId);
-		void removeTimeEvent(const std::string &theLabel, int theEventId);
-	private:
-		// support sprite sheet
-		void tryLoadSpriteSheet();
-		void tryUnloadSpirteSheet();
-	};
-	
-	// If you want to load super animation file before create super anim node,
-	// call this function.
-	extern bool LoadAnimFileExt(const std::string &theAbsAnimFile);
-	
-	// super animation file is loaded automatically when creating super anim node, then stored in a cache.
-	// if you want to unload it, call this function.
-	// P.S.: the textures used in animation are still in memory after call the function.
-	// cocos2d keep a reference to these textures, call removeUnusedTextures by yourself
-	// to remove those texture.
-	extern void UnloadAnimFileExt(const std::string &theAbsAnimFile);
+// support sprite sheet
+-(void) tryLoadSpriteSheet;
+-(void) tryUnloadSpirteSheet;
 
-};
+// If you want to load super animation file before create super anim node,
+// call this function.
++(BOOL) LoadAnimFileExt:(const char*) theAbsAnimFile;
+// super animation file is loaded automatically when creating super anim node, then stored in a cache.
+// if you want to unload it, call this function.
+// P.S.: the textures used in animation are still in memory after call the function.
+// cocos2d keep a reference to these textures, call removeUnusedTextures by yourself
+// to remove those texture.
++(void) UnloadAnimFileExt:(const char*) theAbsAnimFile;
+@end
 
-#endif

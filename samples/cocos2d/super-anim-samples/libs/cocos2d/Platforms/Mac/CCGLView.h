@@ -3,6 +3,7 @@
  *
  * Copyright (c) 2010 Ricardo Quesada
  * Copyright (c) 2011 Zynga Inc.
+ * Copyright (c) 2013-2014 Cocos2D Authors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,57 +27,24 @@
 // Only compile this code on Mac. These files should not be included on your iOS project.
 // But in case they are included, it won't be compiled.
 #import "../../ccMacros.h"
-#ifdef __CC_PLATFORM_MAC
+#if __CC_PLATFORM_MAC
 
 #import <Cocoa/Cocoa.h>
+#import "CCDirectorView.h"
 
-#import "../../ccConfig.h"
-
-//PROTOCOLS:
-
-@protocol CCEventDelegate <NSObject>
-// Mouse
-- (void)mouseDown:(NSEvent *)theEvent;
-- (void)mouseUp:(NSEvent *)theEvent;
-- (void)mouseMoved:(NSEvent *)theEvent;
-- (void)mouseDragged:(NSEvent *)theEvent;
-- (void)rightMouseDown:(NSEvent*)event;
-- (void)rightMouseDragged:(NSEvent*)event;
-- (void)rightMouseUp:(NSEvent*)event;
-- (void)otherMouseDown:(NSEvent*)event;
-- (void)otherMouseDragged:(NSEvent*)event;
-- (void)otherMouseUp:(NSEvent*)event;
-- (void)scrollWheel:(NSEvent *)theEvent;
-- (void)mouseEntered:(NSEvent *)theEvent;
-- (void)mouseExited:(NSEvent *)theEvent;
-
-
-// Keyboard
-- (void)keyDown:(NSEvent *)theEvent;
-- (void)keyUp:(NSEvent *)theEvent;
-- (void)flagsChanged:(NSEvent *)theEvent;
-
-// Touches
-- (void)touchesBeganWithEvent:(NSEvent *)event;
-- (void)touchesMovedWithEvent:(NSEvent *)event;
-- (void)touchesEndedWithEvent:(NSEvent *)event;
-- (void)touchesCancelledWithEvent:(NSEvent *)event;
-
-@end
+//#import "../../ccConfig.h"
 
 /** CCGLView
 
  Only available for Mac OS X
  */
-@interface CCGLView : NSOpenGLView {
-	id<CCEventDelegate> eventDelegate_;
-}
-
-/** Event delegate */
-@property (nonatomic, readwrite, assign) id<CCEventDelegate> eventDelegate;
+@interface CCGLView : NSOpenGLView <CCDirectorView>
 
 /** initializes the CCGLView with a frame rect and an OpenGL context */
 - (id) initWithFrame:(NSRect)frameRect shareContext:(NSOpenGLContext*)context;
+
+/** returns the depth format of the view in BPP */
+- (NSUInteger) depthFormat;
 
 /** uses and locks the OpenGL context */
 -(void) lockOpenGLContext;
@@ -84,11 +52,9 @@
 /** unlocks the openGL context */
 -(void) unlockOpenGLContext;
 
-/** returns the depth format of the view in BPP */
-- (NSUInteger) depthFormat;
+-(GLuint)fbo;
 
-// private
-+(void) load_;
+
 @end
 
 #endif // __CC_PLATFORM_MAC

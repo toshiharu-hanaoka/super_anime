@@ -26,7 +26,7 @@ class GameScene: SKScene {
             let location = touch.locationInNode(self)
         
             //let sprite = SKSpriteNode(imageNamed:"Spaceship")
-            let sprite = SuperAnimNode.create("xxx", theId: 1, theListener: nil)
+            let sprite = SuperAnimNode_bridge.create("xxx", theId: 1, theListener: nil)
             
             sprite.xScale = 0.5
             sprite.yScale = 0.5

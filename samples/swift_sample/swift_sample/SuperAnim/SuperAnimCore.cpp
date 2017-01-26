@@ -27,7 +27,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <algorithm>
 #include "SuperAnimCommon.h"
 
 #define SAM_VERSION 1
@@ -213,19 +212,19 @@ namespace SuperAnim {
 		~SuperAnimDefMgr();
 		
 		// std::string theSuperAnimFile include the absolute path
-		bool LoadSuperAnimMainDef(const std::string &theSuperAnimFile);
+		bool LoadSuperAnimMainDef(std::string theSuperAnimFile);
 	public:
 		static SuperAnimDefMgr *GetInstance();
 		static void DestroyInstance();
 
 		// std::string theSuperAnimFile include the absolute path
-		SuperAnimMainDef *Load_GetSuperAnimMainDef(const std::string &theSuperAnimFile);
-		void UnloadSuperAnimMainDef(const std::string &theName);
+		SuperAnimMainDef *Load_GetSuperAnimMainDef(std::string theSuperAnimFile);
+		void UnloadSuperAnimMainDef(std::string theName);
 	};
 	
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	// implement extern functions
-	SuperAnimHandler GetSuperAnimHandler(const std::string &theAbsAnimFile){
+	SuperAnimHandler GetSuperAnimHandler(std::string theAbsAnimFile){
 		SuperAnimHandler aSuperAnimHander;
 		SuperAnimMainDef *aMainDef = SuperAnimDefMgr::GetInstance()->Load_GetSuperAnimMainDef(theAbsAnimFile);
 		if (aMainDef) {
@@ -379,11 +378,11 @@ namespace SuperAnim {
 		return false;
 	}
 	
-	bool LoadAnimFile(const std::string &theAbsAnimFile){
+	bool LoadAnimFile(std::string theAbsAnimFile){
 		return SuperAnimDefMgr::GetInstance()->Load_GetSuperAnimMainDef(theAbsAnimFile) != NULL;
 	}
 	
-	void UnloadAnimFile(const std::string &theAbsAnimFile){
+	void UnloadAnimFile(std::string theAbsAnimFile){
 		SuperAnimDefMgr::GetInstance()->UnloadSuperAnimMainDef(theAbsAnimFile);
 	}
 	
@@ -555,7 +554,7 @@ namespace SuperAnim {
 		
 		return true;
 	}
-	bool SuperAnimDefMgr::LoadSuperAnimMainDef(const std::string &theSuperAnimFile)
+	bool SuperAnimDefMgr::LoadSuperAnimMainDef(std::string theSuperAnimFile)
 	{
 		std::string aFullPath = theSuperAnimFile;
 		
@@ -763,7 +762,7 @@ namespace SuperAnim {
 		return true;
 	}
 	
-	SuperAnimMainDef *SuperAnimDefMgr::Load_GetSuperAnimMainDef(const std::string &theSuperAnimFile)
+	SuperAnimMainDef *SuperAnimDefMgr::Load_GetSuperAnimMainDef(std::string theSuperAnimFile)
 	{
 		SuperAnimMainDefMap::iterator anItr = mMainDefCache.find(theSuperAnimFile);
 		if (anItr != mMainDefCache.end())
@@ -777,7 +776,7 @@ namespace SuperAnim {
 		return Load_GetSuperAnimMainDef(theSuperAnimFile);
 	}
 	
-	void SuperAnimDefMgr::UnloadSuperAnimMainDef(const std::string &theName)
+	void SuperAnimDefMgr::UnloadSuperAnimMainDef(std::string theName)
 	{
 		SuperAnimMainDefMap::iterator anItr = mMainDefCache.find(theName);
 		if (anItr == mMainDefCache.end())

@@ -15,12 +15,12 @@
 }
 @end
 
-@interface SuperAnimNode : SKNode
+@interface SuperAnimNode_bridge : SKNode
 {
-    void *_obj;
+    id _obj;
 }
 
-+(SuperAnimNode*)create:(NSString*)theAbsAnimFile
++(SuperAnimNode_bridge*)create:(NSString*)theAbsAnimFile
                        theId:(int)theId
                        theListener:(SuperAnimNodeListener*)theListener;
 

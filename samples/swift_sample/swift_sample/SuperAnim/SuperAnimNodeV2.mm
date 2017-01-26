@@ -24,53 +24,80 @@
 //  THE SOFTWARE.
 //
 
-#include "SuperAnimNodeV2.h"
-#import <OpenGLES/ES2/glext.h>
-
+#import "SuperAnimNodeV2.h"
+#import "SuperAnimCommon.h"
+//////////////////////////////////////////////////////////////////////////
+#include <map>
+#include <vector>
 using namespace SuperAnim;
-//////////////////////////////////////////////////////////////////////////
-// platform functions needed by SuperAnimCore
+
+typedef std::map<SuperAnimSpriteId, SuperAnimSpriteId> SuperSpriteIdToSuperSpriteIdMap;
+
+// for time event
+struct TimeEventInfo{
+	std::string mLabelName;
+	float mTimeFactor;
+	int mEventId;
+};
+typedef std::vector<TimeEventInfo> TimeEventInfoArray;
+typedef std::map<std::string, TimeEventInfoArray> LabelNameToTimeEventInfoArrayMap;
+
 unsigned char* GetFileData(const char* pszFileName, const char* pszMode, unsigned long * pSize){
-	return CCFileUtils::sharedFileUtils()->getFileData(pszFileName, pszMode, pSize);
-}
-//////////////////////////////////////////////////////////////////////////
-
-namespace SuperAnim {
-	class SuperAnimSprite
+	FILE *aFile = fopen(pszFileName, pszMode);
+	if (aFile == NULL)
 	{
-	public:
-		CCTexture2D *mTexture;
-		ccV3F_C4B_T2F_Quad mQuad;
-		std::string mStringId;
-	public:
-		SuperAnimSprite();
-		SuperAnimSprite(CCTexture2D *theTexture);
-		SuperAnimSprite(CCTexture2D *theTexture, CCRect theTextureRect);
-		~SuperAnimSprite();
-		
-		void SetTexture(CCTexture2D *theTexture);
-		void SetTexture(CCTexture2D *theTexture, CCRect theTextureRect);
-	};
-
-	typedef std::map<SuperAnimSpriteId, SuperAnimSprite *> IdToSuperAnimSpriteMap;
-	class SuperAnimSpriteMgr
+		assert(false && "Can't open animation file.");
+		return NULL;
+	}
+	
+	fseek(aFile, 0, SEEK_END);
+	unsigned long aFileSize = ftell(aFile);
+	fseek(aFile, 0, SEEK_SET);
+	unsigned char *aFileBuffer = new unsigned char[aFileSize];
+	if (aFileBuffer == NULL)
 	{
-		IdToSuperAnimSpriteMap mSuperAnimSpriteMap;
-		IdToSuperAnimSpriteMap::const_iterator mSuperAnimSpriteIterator;
-	private:
-		SuperAnimSpriteMgr();
-		~SuperAnimSpriteMgr();
-
-	public:
-		static SuperAnimSpriteMgr *GetInstance();
-		static void DestroyInstance();
-		SuperAnimSpriteId LoadSuperAnimSprite(std::string theSpriteName);
-		void UnloadSuperSprite(SuperAnimSpriteId theSpriteId);
-		SuperAnimSprite * GetSpriteById(SuperAnimSpriteId theSpriteId);
-		void BeginIterateSpriteId();
-		bool IterateSpriteId(SuperAnimSpriteId &theCurSpriteId);
-	};
+		assert(false && "Cannot allocate memory.");
+		return NULL;
+	}
+	aFileSize = fread(aFileBuffer, sizeof(unsigned char), aFileSize, aFile);
+	fclose(aFile);
+	*pSize = aFileSize;
+	return aFileBuffer;
 }
+class SuperAnimSprite
+{
+public:
+	CCTexture2D *mTexture;
+	ccV3F_C4B_T2F_Quad mQuad;
+	std::string mStringId;
+public:
+	SuperAnimSprite();
+	SuperAnimSprite(CCTexture2D *theTexture);
+	SuperAnimSprite(CCTexture2D *theTexture, CGRect theTextureRect);
+	~SuperAnimSprite();
+	
+	void SetTexture(CCTexture2D *theTexture);
+	void SetTexture(CCTexture2D *theTexture, CGRect theTextureRect);
+};
+
+typedef std::map<SuperAnimSpriteId, SuperAnimSprite *> IdToSuperAnimSpriteMap;
+class SuperAnimSpriteMgr
+{
+	IdToSuperAnimSpriteMap mSuperAnimSpriteMap;
+	IdToSuperAnimSpriteMap::const_iterator mSuperAnimSpriteIterator;
+private:
+	SuperAnimSpriteMgr();
+	~SuperAnimSpriteMgr();
+	
+public:
+	static SuperAnimSpriteMgr *GetInstance();
+	static void DestroyInstance();
+	SuperAnimSpriteId LoadSuperAnimSprite(std::string theSpriteName);
+	void UnloadSuperSprite(SuperAnimSpriteId theSpriteId);
+	SuperAnimSprite * GetSpriteById(SuperAnimSpriteId theSpriteId);
+	void BeginIterateSpriteId();
+	bool IterateSpriteId(SuperAnimSpriteId &theCurSpriteId);
+};
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -87,7 +114,7 @@ SuperAnimSprite::SuperAnimSprite(CCTexture2D *theTexture)
 	SetTexture(theTexture);
 }
 
-SuperAnimSprite::SuperAnimSprite(CCTexture2D *theTexture, CCRect theTextureRect)
+SuperAnimSprite::SuperAnimSprite(CCTexture2D *theTexture, CGRect theTextureRect)
 {
 	mTexture = NULL;
 	memset(&mQuad, 0, sizeof(mQuad));
@@ -98,19 +125,19 @@ SuperAnimSprite::~SuperAnimSprite()
 {
 	if (mTexture != NULL)
 	{
-		mTexture->release();
+		[mTexture release];
 		mTexture = NULL;
 	}
 }
 
 void SuperAnimSprite::SetTexture(CCTexture2D *theTexture)
 {
-	CCRect aRect = CCRectZero;
-	aRect.size = theTexture->getContentSize();
+	CGRect aRect = CGRectZero;
+	aRect.size = [theTexture contentSize];
 	SetTexture(theTexture, aRect);
 }
 
-void SuperAnimSprite::SetTexture(CCTexture2D *theTexture, CCRect theTextureRect)
+void SuperAnimSprite::SetTexture(CCTexture2D *theTexture, CGRect theTextureRect)
 {
 	if (theTexture == NULL)
 	{
@@ -119,18 +146,18 @@ void SuperAnimSprite::SetTexture(CCTexture2D *theTexture, CCRect theTextureRect)
 	
 	if (mTexture != NULL)
 	{
-		mTexture->release();
+		[mTexture release];
 		mTexture = NULL;
 	}
 	
 	// retain this texture in case removed by removeUnusedTextures();
-	theTexture->retain();
+	[theTexture retain];
 	mTexture = theTexture;
 	
 	// Set Texture coordinates
-	CCRect theTexturePixelRect = CC_RECT_POINTS_TO_PIXELS(theTextureRect);
-	float aTextureWidth = (float)mTexture->getPixelsWide();
-	float aTextureHeight = (float)mTexture->getPixelsHigh();
+	CGRect theTexturePixelRect = CC_RECT_POINTS_TO_PIXELS(theTextureRect);
+	float aTextureWidth = [mTexture pixelsWide];
+	float aTextureHeight = [mTexture pixelsHigh];
 	
 	float aLeft, aRight, aTop, aBottom;
 	aLeft = theTexturePixelRect.origin.x / aTextureWidth;
@@ -146,22 +173,16 @@ void SuperAnimSprite::SetTexture(CCTexture2D *theTexture, CCRect theTextureRect)
 	mQuad.tl.texCoords.v = aTop;
 	mQuad.tr.texCoords.u = aRight;
 	mQuad.tr.texCoords.v = aTop;
-	
-	// Set position
-	//float x1 = 0;
-	//float y1 = 0;
-	//float x2 = x1 + theTextureRect.size.width;
-	//float y2 = y1 + theTextureRect.size.height;
-	
+		
 	float x1 = theTexturePixelRect.size.width * -0.5f;
 	float y1 = theTexturePixelRect.size.height * -0.5f;
 	float x2 = theTexturePixelRect.size.width * 0.5f;
 	float y2 = theTexturePixelRect.size.height * 0.5f;
 	
-	mQuad.bl.vertices = vertex3(x1, y1, 0);
-	mQuad.br.vertices = vertex3(x2, y1, 0);
-	mQuad.tl.vertices = vertex3(x1, y2, 0);
-	mQuad.tr.vertices = vertex3(x2, y2, 0);
+	mQuad.bl.vertices = (ccVertex3F){x1, y1, 0};
+	mQuad.br.vertices = (ccVertex3F){x2, y1, 0};
+	mQuad.tl.vertices = (ccVertex3F){x1, y2, 0};
+	mQuad.tr.vertices = (ccVertex3F){x2, y2, 0};
 	
 	// Set color
 	ccColor4B aDefaultColor = {255, 255, 255, 255};
@@ -229,7 +250,7 @@ bool SuperAnimSpriteMgr::IterateSpriteId(SuperAnimSpriteId &theCurSpriteId){
 	return true;
 }
 
-CCTexture2D* getTexture(std::string theImageFullPath, CCRect& theTextureRect){
+CCTexture2D* getTexture(std::string theImageFullPath, CGRect& theTextureRect){
 	// try to load from sprite sheet
 	std::string anImageFileName;
 	int aLastSlashIndex = MAX((int)theImageFullPath.find_last_of('/'), (int)theImageFullPath.find_last_of('\\'));
@@ -238,15 +259,15 @@ CCTexture2D* getTexture(std::string theImageFullPath, CCRect& theTextureRect){
 	} else {
 		anImageFileName = theImageFullPath;
 	}
-	CCSpriteFrame *aSpriteFrame = CCSpriteFrameCache::sharedSpriteFrameCache()->spriteFrameByName(anImageFileName.c_str());
+	CCSpriteFrame *aSpriteFrame = [[CCSpriteFrameCache sharedSpriteFrameCache] spriteFrameByName:[NSString stringWithCString:anImageFileName.c_str() encoding:NSUTF8StringEncoding]];
 	if (aSpriteFrame) {
-		theTextureRect = aSpriteFrame->getRect();
-		return aSpriteFrame->getTexture();
+		theTextureRect = [aSpriteFrame rect];
+		return [aSpriteFrame texture];
 	}
 	
-	CCTexture2D* aTexture = CCTextureCache::sharedTextureCache()->addImage(theImageFullPath.c_str());
-	theTextureRect.origin = CCPointZero;
-	theTextureRect.size = aTexture->getContentSize();
+	CCTexture2D* aTexture = [[CCTextureCache sharedTextureCache] addImage:[NSString stringWithCString:(theImageFullPath.c_str()) encoding:NSUTF8StringEncoding]];
+	theTextureRect.origin = CGPointZero;
+	theTextureRect.size = [aTexture contentSize];
 	return aTexture;
 }
 
@@ -281,12 +302,10 @@ SuperAnimSpriteId SuperAnimSpriteMgr::LoadSuperAnimSprite(std::string theSpriteN
 		anImageFile = theSpriteName;
 	}
 	// load the physical sprite
-	CCRect aTextureRect;
+	CGRect aTextureRect;
 	CCTexture2D *aTexture = getTexture(anImageFile.c_str(), aTextureRect);
 	if (aTexture == NULL) {
-		char aBuffer[256];
-		sprintf(aBuffer, "%s is missing.", anImageFileName.c_str());
-		CCMessageBox(aBuffer, "Error");
+		assert(false && "Failed to get texture.");
 		return InvalidSuperAnimSpriteId;
 	}
 	
@@ -331,120 +350,24 @@ enum AnimState
 	kAnimStatePause
 };
 
-SuperAnimNode::SuperAnimNode()
-{
-	mId = -1;
-	mListener = NULL;
-	mAnimState = kAnimStateInvalid;
-	mUseSpriteSheet = false;
-	mSpriteSheet = NULL;
-	mIsFlipX = mIsFlipY = false;
-}
-
-SuperAnimNode::~SuperAnimNode()
-{
-	tryUnloadSpirteSheet();
-	while (mReplacedSpriteMap.size() > 0) {
-		SuperSpriteIdToSuperSpriteIdMap::iterator anIter = mReplacedSpriteMap.begin();
-		SuperAnimSpriteMgr::GetInstance()->UnloadSuperSprite(anIter->second);
-		mReplacedSpriteMap.erase(anIter);
-	}
-}
-
-
-SuperAnimNode *SuperAnimNode::create(std::string theAbsAnimFile, int theId, SuperAnimNodeListener *theListener)
-{
-	SuperAnimNode *aSuperAnimNode = new SuperAnimNode();
-	if (aSuperAnimNode == NULL)
-	{
-		return NULL;
-	}
-	if (aSuperAnimNode->Init(theAbsAnimFile, theId, theListener) == false)
-	{
-		delete aSuperAnimNode;
-		return NULL;
-	}
-	aSuperAnimNode->autorelease();
-	return aSuperAnimNode;
-}
-
 bool hasFile(std::string theFileFullPath){
-	bool hasFile = false;
-	bool shouldPopupNoitify = CCFileUtils::sharedFileUtils()->isPopupNotify();
-	CCFileUtils::sharedFileUtils()->setPopupNotify(false);
-	unsigned long aSize;
-	unsigned char *aDataBuffer = CCFileUtils::sharedFileUtils()->getFileData(theFileFullPath.c_str(), "rb", &aSize);
-    if (aDataBuffer != NULL) {
-        CC_SAFE_DELETE_ARRAY(aDataBuffer);
-        hasFile = true;
+	FILE *aFileHandler = fopen(theFileFullPath.c_str(), "rb");
+    if (aFileHandler != NULL) {
+        fclose(aFileHandler);
+        return true;
     }
-	CCFileUtils::sharedFileUtils()->setPopupNotify(shouldPopupNoitify);
-    return hasFile;
-}
-
-bool SuperAnimNode::Init(std::string theAbsAnimFile, int theId, SuperAnimNodeListener *theListener)
-{
-	// try to load the sprite sheet file
-	mSpriteSheetFileFullPath = theAbsAnimFile.substr(0, theAbsAnimFile.find_last_of('.') + 1) + "plist";
-	tryLoadSpriteSheet();
-	
-	mAnimHandler = GetSuperAnimHandler(theAbsAnimFile);
-	if (!mAnimHandler.IsValid())
-	{
-		char aBuffer[256];
-		sprintf(aBuffer, "Can't load the SuperAnim %s.", theAbsAnimFile.c_str());
-		CCMessageBox(aBuffer, "Error");
-		return false;
-	}
-
-	setContentSize(CC_SIZE_PIXELS_TO_POINTS(CCSizeMake(mAnimHandler.mWidth, mAnimHandler.mHeight)));
-
-	mId = theId;
-	mListener = theListener;
-	mAnimState = kAnimStateInitialized;
-	mIsFlipX = mIsFlipY = false;
-	mSpeedFactor = 1.0f;
-	mIsLoop = false;
-
-	// shader program
-	setShaderProgram(CCShaderCache::sharedShaderCache()->programForKey(kCCShader_PositionTextureColor));
-	scheduleUpdate();
-	
-	setAnchorPoint(ccp(0.5f, 0.5f));
-
-	return true;
-}
-
-void SuperAnimNode::tryLoadSpriteSheet(){
-	if (hasFile(mSpriteSheetFileFullPath)) {
-		CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile(mSpriteSheetFileFullPath.c_str());
-		std::string aTexturePath = mSpriteSheetFileFullPath.substr(0, mSpriteSheetFileFullPath.find_last_of('.') + 1) + "png";
-		mSpriteSheet = CCTextureCache::sharedTextureCache()->addImage(aTexturePath.c_str());
-		mUseSpriteSheet = true;
-	}
-}
-
-void SuperAnimNode::tryUnloadSpirteSheet(){
-	if (hasFile(mSpriteSheetFileFullPath)) {
-		CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile(mSpriteSheetFileFullPath.c_str());
-	}
-}
-
-void SuperAnimNode::setFlipX(bool isFlip){
-	mIsFlipX = isFlip;
-}
-
-void SuperAnimNode::setFlipY(bool isFlip){
-	mIsFlipY = isFlip;
+    return false;
 }
 
 // Operator between matrix & vertex
 inline ccVertex3F operator*(const SuperAnimMatrix3 &theMatrix3, const ccVertex3F &theVec)
 {
-	return vertex3(
-				   theMatrix3.m00*theVec.x + theMatrix3.m01*theVec.y + theMatrix3.m02,
-				   theMatrix3.m10*theVec.x + theMatrix3.m11*theVec.y + theMatrix3.m12,
-				   theVec.z);
+	return
+	{
+		theMatrix3.m00*theVec.x + theMatrix3.m01*theVec.y + theMatrix3.m02,
+		theMatrix3.m10*theVec.x + theMatrix3.m11*theVec.y + theMatrix3.m12,
+		theVec.z
+	};
 }
 
 inline ccV3F_C4B_T2F_Quad operator*(const SuperAnimMatrix3 &theMatrix3, const ccV3F_C4B_T2F_Quad &theQuad)
@@ -457,15 +380,123 @@ inline ccV3F_C4B_T2F_Quad operator*(const SuperAnimMatrix3 &theMatrix3, const cc
 	return aNewQuad;
 }
 
-void SuperAnimNode::draw()
-{
+@implementation SuperAnimNode
+@synthesize flipX = mIsFlipX;
+@synthesize flipY = mIsFlipY;
+@synthesize speedFactor = mSpeedFactor;
+
+-(void)dealloc{
+	[self tryUnloadSpirteSheet];
+	if (mAnimHandler != NULL) {
+		SuperAnimHandler* anAnimHandler = (SuperAnimHandler*)mAnimHandler;
+		delete anAnimHandler;
+	}
+	
+	if (mReplacedSpriteMap != NULL) {
+		SuperSpriteIdToSuperSpriteIdMap* aReplacedSpriteMap = (SuperSpriteIdToSuperSpriteIdMap*)mReplacedSpriteMap;
+		while (aReplacedSpriteMap->size() > 0) {
+			SuperSpriteIdToSuperSpriteIdMap::iterator anIter = aReplacedSpriteMap->begin();
+			SuperAnimSpriteMgr::GetInstance()->UnloadSuperSprite(anIter->second);
+			aReplacedSpriteMap->erase(anIter);
+		}
+		delete aReplacedSpriteMap;
+		mReplacedSpriteMap = NULL;
+	}
+	
+	if (mLabelNameToTimeEventInfoArrayMap != NULL) {
+		LabelNameToTimeEventInfoArrayMap* aLabelNameToTimeEventInfoArrayMap = (LabelNameToTimeEventInfoArrayMap*)mLabelNameToTimeEventInfoArrayMap;
+		aLabelNameToTimeEventInfoArrayMap->clear();
+		delete aLabelNameToTimeEventInfoArrayMap;
+		mLabelNameToTimeEventInfoArrayMap = NULL;
+	}
+	if (mCurTimeEventInfoArray != NULL) {
+		TimeEventInfoArray* aTimeEventInfoArray = (TimeEventInfoArray*)mCurTimeEventInfoArray;
+		aTimeEventInfoArray->clear();
+		delete aTimeEventInfoArray;
+		mCurTimeEventInfoArray = NULL;
+	}
+	
+	[super dealloc];
+}
+
++(id) create:(NSString*) theAbsAnimFile id:(int) theId listener:(id<SuperAnimNodeListener>) theListener{
+	return [[[self alloc] initWithAnimFile:theAbsAnimFile id:theId listener:theListener] autorelease];
+}
+
+-(id) initWithAnimFile:(NSString*) theAbsAnimFile id:(int) theId listener:(id<SuperAnimNodeListener>) theListener{
+	
+	if (self = [super init]) {
+		// try to load the sprite sheet file
+		std::string aCString = [theAbsAnimFile cStringUsingEncoding:NSUTF8StringEncoding];
+		mSpriteSheetFileFullPath = [NSString stringWithCString:(aCString.substr(0, aCString.find_last_of('.') + 1) + "plist").c_str() encoding:NSUTF8StringEncoding];
+		[self tryLoadSpriteSheet];
+		
+		SuperAnimHandler aAnimHandler = GetSuperAnimHandler(aCString);
+		if (!aAnimHandler.IsValid())
+		{
+			NSAssert(false, @"Failed to load animation.");
+			return nil;
+		}
+		
+		SuperAnimHandler *aCopied = new SuperAnimHandler();
+		*aCopied = aAnimHandler;
+		mAnimHandler = aCopied;
+		
+		mReplacedSpriteMap = new SuperSpriteIdToSuperSpriteIdMap();
+		mLabelNameToTimeEventInfoArrayMap = new LabelNameToTimeEventInfoArrayMap();
+		mCurTimeEventInfoArray = new TimeEventInfoArray();
+		
+		self.contentSize = CC_SIZE_PIXELS_TO_POINTS(CGSizeMake(aAnimHandler.mWidth, aAnimHandler.mHeight));
+		
+		mId = theId;
+		mListener = theListener;
+		mAnimState = kAnimStateInitialized;
+		mIsFlipX = mIsFlipY = false;
+		mSpeedFactor = 1.0f;
+		mIsLoop = NO;
+		
+		// shader program
+		self.shaderProgram = [[CCShaderCache sharedShaderCache] programForKey:kCCShader_PositionTextureColor];
+		
+		[self scheduleUpdate];
+		
+		self.anchorPoint = ccp(0.5f, 0.5f);
+	}
+	
+	return self;
+}
+
+// support sprite sheet
+-(void) tryLoadSpriteSheet{
+	std::string aCString = [mSpriteSheetFileFullPath cStringUsingEncoding:NSUTF8StringEncoding];
+	if (hasFile(aCString)) {
+		[[CCSpriteFrameCache sharedSpriteFrameCache] addSpriteFramesWithFile:mSpriteSheetFileFullPath];
+		std::string aTexturePath = aCString.substr(0, aCString.find_last_of('.') + 1) + "png";
+		mSpriteSheet = [[CCTextureCache sharedTextureCache] addImage:[NSString stringWithCString:aTexturePath.c_str() encoding:NSUTF8StringEncoding]];
+		mUseSpriteSheet = YES;
+	} else {
+		mUseSpriteSheet = NO;
+		mSpriteSheet = nil;
+	}
+}
+-(void) tryUnloadSpirteSheet{
+	std::string aCString = [mSpriteSheetFileFullPath cStringUsingEncoding:NSUTF8StringEncoding];
+	if (hasFile(aCString)) {
+		[[CCSpriteFrameCache sharedSpriteFrameCache] removeSpriteFramesFromFile:mSpriteSheetFileFullPath];
+	}
+}
+
+-(void) draw{
+	
 	if (mAnimState == kAnimStateInvalid ||
 		mAnimState == kAnimStateInitialized)
 	{
 		return;
 	}
 	
-	if (!mAnimHandler.IsValid()) {
+	SuperAnimHandler& anAnimHandler = *((SuperAnimHandler*)mAnimHandler);
+	
+	if (!anAnimHandler.IsValid()) {
 		return;
 	}
 	
@@ -476,54 +507,57 @@ void SuperAnimNode::draw()
 	int anIndex = 0;
 	
 	static SuperAnimObjDrawInfo sAnimObjDrawnInfo;
-	//float aPixelToPointScale = 1.0f / CC_CONTENT_SCALE_FACTOR();
-	float anAnimContentHeightInPixel = getContentSize().height * CC_CONTENT_SCALE_FACTOR();
+	float aPixelToPointScale = 1.0f / CC_CONTENT_SCALE_FACTOR();
+	float anAnimContentHeightInPixel = self.contentSize.height * CC_CONTENT_SCALE_FACTOR();
 	BeginIterateAnimObjDrawInfo();
-	while (IterateAnimObjDrawInfo(mAnimHandler, sAnimObjDrawnInfo)) {
+	while (IterateAnimObjDrawInfo(anAnimHandler, sAnimObjDrawnInfo)) {
 		if (sAnimObjDrawnInfo.mSpriteId == InvalidSuperAnimSpriteId) {
-			CCAssert(false, "Missing a sprite.");
+			assert(false && "Missing a sprite.");
 			continue;
 		}
 		
+		//SuperAnimSprite *aSprite = SuperAnimSpriteMgr::GetInstance()->GetSpriteById(sAnimObjDrawnInfo.mSpriteId);
 		// check whether this sprite has been replaced
 		SuperAnimSpriteId aCurSpriteId = sAnimObjDrawnInfo.mSpriteId;
-		SuperSpriteIdToSuperSpriteIdMap::const_iterator anIter = mReplacedSpriteMap.find(aCurSpriteId);
-		if (anIter != mReplacedSpriteMap.end()) {
+		SuperSpriteIdToSuperSpriteIdMap* aReplacedSpriteMap = (SuperSpriteIdToSuperSpriteIdMap*)mReplacedSpriteMap;
+		SuperSpriteIdToSuperSpriteIdMap::const_iterator anIter = aReplacedSpriteMap->find(aCurSpriteId);
+		if (anIter != aReplacedSpriteMap->end()) {
 			aCurSpriteId = anIter->second;
 		}
-			
+		
 		//SuperAnimSprite *aSprite = SuperAnimSpriteMgr::GetInstance()->GetSpriteById(aCurSpriteId);
 		SuperAnimSprite *aSprite = (SuperAnimSprite*)aCurSpriteId;
+
 		if (aSprite == NULL){
-			CCAssert(false, "Missing a sprite.");
+			assert(false && "Missing a sprite.");
 			continue;
 		}
 		
 		// safe check!!
 		if (mUseSpriteSheet) {
-			CCAssert(mSpriteSheet == aSprite->mTexture, "must in the same texture!!");
+			assert(mSpriteSheet == aSprite->mTexture && "must in the same texture!!");
 		}
-		
+				
 		// cocos2d the origin is located at left bottom, but is in left top in flash
 		sAnimObjDrawnInfo.mTransform.mMatrix.m12 = anAnimContentHeightInPixel - sAnimObjDrawnInfo.mTransform.mMatrix.m12;
 		// convert to point
-		//sAnimObjDrawnInfo.mTransform.Scale(aPixelToPointScale, aPixelToPointScale);
+		sAnimObjDrawnInfo.mTransform.Scale(aPixelToPointScale, aPixelToPointScale);
 		
 		//sAnimObjDrawnInfo.mTransform.mMatrix.m12 *= -1;
-				
+		
 		// Be sure that you call this macro every draw
 		CC_NODE_DRAW_SETUP();
 		
 		ccV3F_C4B_T2F_Quad aOriginQuad = aSprite->mQuad;
 		aSprite->mQuad = sAnimObjDrawnInfo.mTransform.mMatrix * aSprite->mQuad;
-		ccColor4B aColor = ccc4(sAnimObjDrawnInfo.mColor.mRed, sAnimObjDrawnInfo.mColor.mGreen, sAnimObjDrawnInfo.mColor.mBlue, sAnimObjDrawnInfo.mColor.mAlpha);		
+		ccColor4B aColor = ccc4(sAnimObjDrawnInfo.mColor.mRed, sAnimObjDrawnInfo.mColor.mGreen, sAnimObjDrawnInfo.mColor.mBlue, sAnimObjDrawnInfo.mColor.mAlpha);
 		aSprite->mQuad.bl.colors = aColor;
 		aSprite->mQuad.br.colors = aColor;
 		aSprite->mQuad.tl.colors = aColor;
 		aSprite->mQuad.tr.colors = aColor;
 		
 		if (mIsFlipX) {
-			float aWidthinPixel = getContentSize().width * CC_CONTENT_SCALE_FACTOR();
+			float aWidthinPixel = self.contentSize.width * CC_CONTENT_SCALE_FACTOR();
 			aSprite->mQuad.bl.vertices.x = aWidthinPixel - aSprite->mQuad.bl.vertices.x;
 			aSprite->mQuad.br.vertices.x = aWidthinPixel - aSprite->mQuad.br.vertices.x;
 			aSprite->mQuad.tl.vertices.x = aWidthinPixel - aSprite->mQuad.tl.vertices.x;
@@ -531,7 +565,7 @@ void SuperAnimNode::draw()
 		}
 		
 		if (mIsFlipY) {
-			float aHeightinPixel = getContentSize().height * CC_CONTENT_SCALE_FACTOR();
+			float aHeightinPixel = self.contentSize.height * CC_CONTENT_SCALE_FACTOR();
 			aSprite->mQuad.bl.vertices.y = aHeightinPixel - aSprite->mQuad.bl.vertices.y;
 			aSprite->mQuad.br.vertices.y = aHeightinPixel - aSprite->mQuad.br.vertices.y;
 			aSprite->mQuad.tl.vertices.y = aHeightinPixel - aSprite->mQuad.tl.vertices.y;
@@ -541,32 +575,9 @@ void SuperAnimNode::draw()
 		// draw
 		if (!mUseSpriteSheet)
 		{
-            glEnalbe(GL_BLEND);
-            glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
-            
-            //Spriteのデータを得る
-            logn offset = (long)&aSprite->mQuad; //?
-                        
-            // vertex
-            int diff = offsetof( ccV3F_C4B_T2F, vertices);
-            glVertexAttribPointer(GLKVertexAttribPosition, 3, GL_FLOAT, GL_FALSE, kQuadSize, (void*) (offset + diff));
-            
-            // texCoods
-            diff = offsetof( ccV3F_C4B_T2F, texCoords);
-            glVertexAttribPointer(GLKVertexAttribTexCoord0, 2, GL_FLOAT, GL_FALSE, kQuadSize, (void*)(offset + diff));
-            
-            // color
-            diff = offsetof( ccV3F_C4B_T2F, colors);
-            glVertexAttribPointer(GLKVertexAttribColor, 4, GL_UNSIGNED_BYTE, GL_TRUE, kQuadSize, (void*)(offset + diff));
-            
-            glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-            
-            
-            
-            /*
-            
 			ccGLBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-			ccGLBindTexture2D(aSprite->mTexture->getName());
+			ccGLBindTexture2D([aSprite->mTexture name]);
+			
 			//
 			// Attributes
 			ccGLEnableVertexAttribs( kCCVertexAttribFlag_PosColorTex );
@@ -575,19 +586,18 @@ void SuperAnimNode::draw()
 			long offset = (long)&aSprite->mQuad;
 			
 			// vertex
-             int diff = offsetof( ccV3F_C4B_T2F, vertices);
-             glVertexAttribPointer(kCCVertexAttrib_Position, 3, GL_FLOAT, GL_FALSE, kQuadSize, (void*) (offset + diff));
-             
-             // texCoods
-             diff = offsetof( ccV3F_C4B_T2F, texCoords);
-             glVertexAttribPointer(kCCVertexAttrib_TexCoords, 2, GL_FLOAT, GL_FALSE, kQuadSize, (void*)(offset + diff));
-             
-             // color
-             diff = offsetof( ccV3F_C4B_T2F, colors);
-             glVertexAttribPointer(kCCVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_TRUE, kQuadSize, (void*)(offset + diff));
-             
-             glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-             */
+			int diff = offsetof( ccV3F_C4B_T2F, vertices);
+			glVertexAttribPointer(kCCVertexAttrib_Position, 3, GL_FLOAT, GL_FALSE, kQuadSize, (void*) (offset + diff));
+			
+			// texCoods
+			diff = offsetof( ccV3F_C4B_T2F, texCoords);
+			glVertexAttribPointer(kCCVertexAttrib_TexCoords, 2, GL_FLOAT, GL_FALSE, kQuadSize, (void*)(offset + diff));
+			
+			// color
+			diff = offsetof( ccV3F_C4B_T2F, colors);
+			glVertexAttribPointer(kCCVertexAttrib_Color, 4, GL_UNSIGNED_BYTE, GL_TRUE, kQuadSize, (void*)(offset + diff));
+			
+			glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 		} else {
 			// 0
 			sVertexBuffer[anIndex] = aSprite->mQuad.bl.vertices;
@@ -614,7 +624,7 @@ void SuperAnimNode::draw()
 			sTexCoorBuffer[anIndex] = aSprite->mQuad.br.texCoords;
 			sColorBuffer[anIndex++] = aSprite->mQuad.br.colors;
 			
-			CCAssert(anIndex < MAX_VERTEX_CNT, "buffer is not enough");
+			assert(anIndex < MAX_VERTEX_CNT && "buffer is not enough");
 		}
 		
 		aSprite->mQuad = aOriginQuad;
@@ -625,7 +635,7 @@ void SuperAnimNode::draw()
 		CC_NODE_DRAW_SETUP();
 		
 		ccGLBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-		ccGLBindTexture2D(mSpriteSheet->getName());
+		ccGLBindTexture2D([mSpriteSheet name]);
 		//
 		// Attributes
 		ccGLEnableVertexAttribs( kCCVertexAttribFlag_PosColorTex );
@@ -643,124 +653,125 @@ void SuperAnimNode::draw()
 	}
 }
 
-void SuperAnimNode::update(float dt)
-{
+-(void) update:(ccTime)time{
 	if (mAnimState != kAnimStatePlaying)
 	{
 		return;
 	}
-	
+	SuperAnimHandler &anAnimHandler = *((SuperAnimHandler*)mAnimHandler);
 	bool isNewLabel = false;
-	float anOriginFrameRate = mAnimHandler.mAnimRate;
-	mAnimHandler.mAnimRate *= mSpeedFactor;
-	IncAnimFrameNum(mAnimHandler, dt, isNewLabel);
-	mAnimHandler.mAnimRate = anOriginFrameRate;
+	float anOriginFrameRate = anAnimHandler.mAnimRate;
+	anAnimHandler.mAnimRate *= mSpeedFactor;
+	IncAnimFrameNum(anAnimHandler, time, isNewLabel);
+	anAnimHandler.mAnimRate = anOriginFrameRate;
 	
-	float aTimeFactor = (mAnimHandler.mCurFrameNum - mAnimHandler.mFirstFrameNumOfCurLabel) / (float)(mAnimHandler.mLastFrameNumOfCurLabel - mAnimHandler.mFirstFrameNumOfCurLabel);
-	for (TimeEventInfoArray::iterator anIter = mCurTimeEventInfoArray.begin(); anIter != mCurTimeEventInfoArray.end(); anIter++) {
+	
+	float aTimeFactor = (anAnimHandler.mCurFrameNum - anAnimHandler.mFirstFrameNumOfCurLabel) / (float)(anAnimHandler.mLastFrameNumOfCurLabel - anAnimHandler.mFirstFrameNumOfCurLabel);
+	TimeEventInfoArray &aCurTimeEventInfoArray = *((TimeEventInfoArray*)mCurTimeEventInfoArray);
+	for (TimeEventInfoArray::iterator anIter = aCurTimeEventInfoArray.begin(); anIter != aCurTimeEventInfoArray.end(); anIter++) {
 		if (aTimeFactor >= anIter->mTimeFactor) {
+			NSString* aLableName = [NSString stringWithCString:anIter->mLabelName.c_str() encoding:NSUTF8StringEncoding];
 			// trigger time event
-			CCLog("Trigger anim time event: %d, %s, %d", mId, anIter->mLabelName.c_str(), anIter->mEventId);
+			CCLOG(@"Trigger anim time event: %d, %@, %d", mId, aLableName, anIter->mEventId);
 			if (mListener) {
-				mListener->OnTimeEvent(mId, anIter->mLabelName, anIter->mEventId);
+				[mListener OnTimeEvent:mId label:aLableName eventId:anIter->mEventId];
 			}
 			break;
 		}
 	}
-	
-	// remove obsolete time event
-	for (TimeEventInfoArray::iterator anIter = mCurTimeEventInfoArray.begin(); anIter != mCurTimeEventInfoArray.end();) {
+	// delete obsolete time event
+	for (TimeEventInfoArray::iterator anIter = aCurTimeEventInfoArray.begin(); anIter != aCurTimeEventInfoArray.end();) {
 		if (aTimeFactor >= anIter->mTimeFactor) {
-			anIter = mCurTimeEventInfoArray.erase(anIter);
+			anIter = aCurTimeEventInfoArray.erase(anIter);
 		} else {
 			anIter++;
 		}
 	}
 	
 	if (isNewLabel && mIsLoop) {
-		PlaySection(mAnimHandler.mCurLabel, mIsLoop);
+		[self PlaySection: [NSString stringWithCString:anAnimHandler.mCurLabel.c_str() encoding:NSUTF8StringEncoding]\
+				   isLoop:mIsLoop];
 	}
 	
 	if (isNewLabel && mListener)
 	{
-		mListener->OnAnimSectionEnd(mId, mAnimHandler.mCurLabel);
+		[mListener OnAnimSectionEnd:mId
+							  label:[NSString stringWithCString:anAnimHandler.mCurLabel.c_str() encoding:NSUTF8StringEncoding]];
 	}
 }
 
-bool SuperAnimNode::HasSection(const std::string &theLabelName){
-	return  SuperAnim::HasSection(mAnimHandler, theLabelName);
+-(BOOL) HasSection:(NSString *)theLabelName{
+	SuperAnimHandler &anAnimHandler = *((SuperAnimHandler*)mAnimHandler);
+	return (SuperAnim::HasSection(anAnimHandler, [theLabelName cStringUsingEncoding:NSUTF8StringEncoding])) == true;
 }
 
-void SuperAnimNode::setSpeedFactor(float theNewSpeedFactor){
-	mSpeedFactor = theNewSpeedFactor;
-}
-
-bool SuperAnimNode::PlaySection(const std::string &theLabel, bool isLoop)
-{
+-(BOOL) PlaySection:(NSString*)	theLabel isLoop:(BOOL) isLoop{
 	if (mAnimState == kAnimStateInvalid)
 	{
-		CCAssert(false, "The animation isn't ready.");
-		return false;
-	}
-
-	if (theLabel.empty())
-	{
-		CCAssert(false, "Please specify an animation section label to play.");
-		return false;
+		assert(false&&"The animation isn't ready.");
+		return NO;
 	}
 	
-	if (PlayBySection(mAnimHandler, theLabel)){
+	std::string aCString = [theLabel cStringUsingEncoding:NSUTF8StringEncoding];
+	SuperAnimHandler &anAnimHandler = *((SuperAnimHandler*)mAnimHandler);
+	if (aCString.empty())
+	{
+		assert(false&&"Please specify an animation section label to play.");
+		return NO;
+	}
+	
+	if (PlayBySection(anAnimHandler, aCString)){
 		mAnimState = kAnimStatePlaying;
-		//CCDirector::sharedDirector()->setNextDeltaTimeZero(true);
+		//[[CCDirector sharedDirector] setNextDeltaTimeZero:YES];
 		mIsLoop = isLoop;
 		
 		// set time event info for this run
-		mCurTimeEventInfoArray.clear();
-		LabelNameToTimeEventInfoArrayMap::const_iterator anIter = mLabelNameToTimeEventInfoArrayMap.find(theLabel);
-		if (anIter != mLabelNameToTimeEventInfoArrayMap.end()) {
-			mCurTimeEventInfoArray.insert(mCurTimeEventInfoArray.begin(), anIter->second.begin(), anIter->second.end());
+		std::string aLabelName = [theLabel cStringUsingEncoding:NSUTF8StringEncoding];
+		TimeEventInfoArray &aCurTimeEventInfoArray = *((TimeEventInfoArray*)mCurTimeEventInfoArray);
+		aCurTimeEventInfoArray.clear();
+		LabelNameToTimeEventInfoArrayMap &aLabelNameToTimeEventInfoArrayMap = *((LabelNameToTimeEventInfoArrayMap*)mLabelNameToTimeEventInfoArrayMap);
+		LabelNameToTimeEventInfoArrayMap::const_iterator anIter = aLabelNameToTimeEventInfoArrayMap.find(aLabelName);
+		if (anIter != aLabelNameToTimeEventInfoArrayMap.end()) {
+			aCurTimeEventInfoArray.insert(aCurTimeEventInfoArray.begin(), anIter->second.begin(), anIter->second.end());
 		}
 		
-		return true;
+		return YES;
 	}
-
+	
 	// we should not go here.
 	// if we do that means you specify a wrong label
-	CCAssert(false, "I cannot find the specified section label in animation.");
-	return false;
+	assert(false&&"I cannot find the specified section label in animation.");
+	return NO;
 }
 
-void SuperAnimNode::Pause()
-{
+-(void) Pause{
 	mAnimState = kAnimStatePause;
 }
 
-void SuperAnimNode::Resume()
-{
+-(void) Resume{
 	mAnimState = kAnimStatePlaying;
 }
 
-bool SuperAnimNode::IsPause(){
+-(BOOL) IsPause{
 	return mAnimState == kAnimStatePause;
 }
 
-bool SuperAnimNode::IsPlaying(){
+-(BOOL) IsPlaying{
 	return mAnimState == kAnimStatePlaying;
 }
 
-int SuperAnimNode::GetCurFrame(){
-	return (int)mAnimHandler.mCurFrameNum;
+-(int) GetCurFrame{
+	SuperAnimHandler &anAnimHandler = *((SuperAnimHandler*)mAnimHandler);
+	return anAnimHandler.mCurFrameNum;
 }
 
-int SuperAnimNode::GetId(){
-	return mId;
+-(NSString*) GetCurSectionName{
+	SuperAnimHandler &anAnimHandler = *((SuperAnimHandler*)mAnimHandler);
+	return [NSString stringWithCString:anAnimHandler.mCurLabel.c_str() encoding:NSUTF8StringEncoding];
 }
 
-std::string SuperAnimNode::GetCurSectionName(){
-	return mAnimHandler.mCurLabel;
-}
-
-void SuperAnimNode::replaceSprite(const std::string &theOriginSpriteName, const std::string &theNewSpriteName){
+-(void) replaceSprite:(NSString*) theOriginSpriteNameNS newSpriteName:(NSString*) theNewSpriteNameNS{
+	std::string theOriginSpriteName = [theOriginSpriteNameNS cStringUsingEncoding:NSUTF8StringEncoding];
 	SuperAnimSpriteId anOriginSpriteId = InvalidSuperAnimSpriteId;
 	SuperAnimSpriteId aCurSpriteId;
 	SuperAnimSpriteMgr::GetInstance()->BeginIterateSpriteId();
@@ -774,14 +785,20 @@ void SuperAnimNode::replaceSprite(const std::string &theOriginSpriteName, const 
 	}
 	
 	if (anOriginSpriteId != InvalidSuperAnimSpriteId) {
-		SuperAnimSpriteId aNewSpriteId = SuperAnimSpriteMgr::GetInstance()->LoadSuperAnimSprite(CCFileUtils::sharedFileUtils()->fullPathFromRelativePath(theNewSpriteName.c_str()));
-		CCAssert(aNewSpriteId != InvalidSuperAnimSpriteId, "failed to create super anim sprite");
-		mReplacedSpriteMap[anOriginSpriteId] = aNewSpriteId;
+		NSString* aNewSpriteFullPath = [[CCFileUtils sharedFileUtils] fullPathFromRelativePath:theNewSpriteNameNS];
+		SuperAnimSpriteId aNewSpriteId = SuperAnimSpriteMgr::GetInstance()->LoadSuperAnimSprite([aNewSpriteFullPath cStringUsingEncoding:NSUTF8StringEncoding]);
+		
+		assert(aNewSpriteId != InvalidSuperAnimSpriteId && "failed to create super anim sprite");
+		
+		SuperSpriteIdToSuperSpriteIdMap* aReplacedSpriteMap = (SuperSpriteIdToSuperSpriteIdMap*)mReplacedSpriteMap;
+		(*aReplacedSpriteMap)[anOriginSpriteId] = aNewSpriteId;
 	} else{
-		CCAssert(false, "Original sprite should exist.");
+		assert(false && "Original sprite should exist.");
 	}
 }
-void SuperAnimNode::resumeSprite(const std::string &theOriginSpriteName){
+//void SuperAnimNode::resumeSprite(std::string theOriginSpriteName){
+-(void) resumeSprite:(NSString*) theOriginSpriteNameNS{
+	std::string theOriginSpriteName = [theOriginSpriteNameNS cStringUsingEncoding:NSUTF8StringEncoding];
 	SuperAnimSpriteId anOriginSpriteId = InvalidSuperAnimSpriteId;
 	SuperAnimSpriteId aCurSpriteId;
 	SuperAnimSpriteMgr::GetInstance()->BeginIterateSpriteId();
@@ -794,34 +811,41 @@ void SuperAnimNode::resumeSprite(const std::string &theOriginSpriteName){
 		}
 	}
 	if (anOriginSpriteId != InvalidSuperAnimSpriteId) {
-		SuperSpriteIdToSuperSpriteIdMap::iterator anIter = mReplacedSpriteMap.find(anOriginSpriteId);
-		if (anIter != mReplacedSpriteMap.end()) {
+		SuperSpriteIdToSuperSpriteIdMap* aReplacedSpriteMap = (SuperSpriteIdToSuperSpriteIdMap*)mReplacedSpriteMap;
+		SuperSpriteIdToSuperSpriteIdMap::iterator anIter = aReplacedSpriteMap->find(anOriginSpriteId);
+		if (anIter != aReplacedSpriteMap->end()) {
 			// unload the replaced sprite
 			SuperAnimSpriteMgr::GetInstance()->UnloadSuperSprite(anIter->second);
-			mReplacedSpriteMap.erase(anIter);
+			aReplacedSpriteMap->erase(anIter);
 		}
 	}
 }
 
 // for time event
-void SuperAnimNode::registerTimeEvent(const std::string &theLabel, float theTimeFactor, int theEventId){
-	if (HasSection(theLabel) == false) {
-		CCAssert(false, "Label not existed.");
+//void SuperAnimNode::registerTimeEvent(std::string theLabel, float theTimeFactor, int theEventId){
+-(void) registerTimeEvent:(NSString*)theLabelNS timeFactor:(float)theTimeFactor timeEventId:(int)theEventId{
+	std::string theLabel = [theLabelNS cStringUsingEncoding:NSUTF8StringEncoding];
+	if ([self HasSection:theLabelNS] == NO) {
+		NSAssert(NO, @"Label not existed.");
 		return;
 	}
 	
 	theTimeFactor = clampf(theTimeFactor, 0.0f, 1.0f);
 	TimeEventInfo aTimeEventInfo = {theLabel, theTimeFactor, theEventId};
-	TimeEventInfoArray &aTimeEventInfoArray = mLabelNameToTimeEventInfoArrayMap[theLabel];
+	LabelNameToTimeEventInfoArrayMap &aLabelNameToTimeEventInfoArrayMap = *((LabelNameToTimeEventInfoArrayMap*)mLabelNameToTimeEventInfoArrayMap);
+	TimeEventInfoArray &aTimeEventInfoArray = aLabelNameToTimeEventInfoArrayMap[theLabel];
 	aTimeEventInfoArray.push_back(aTimeEventInfo);
 }
-void SuperAnimNode::removeTimeEvent(const std::string &theLabel, int theEventId){
-	if (HasSection(theLabel) == false) {
-		CCAssert(false, "Label not existed.");
+//void SuperAnimNode::removeTimeEvent(std::string theLabel, int theEventId){
+-(void) removeTimeEvent:(NSString*) theLabelNS timeEventId:(int) theEventId{
+	std::string theLabel = [theLabelNS cStringUsingEncoding:NSUTF8StringEncoding];
+	if ([self HasSection:theLabelNS] == NO) {
+		NSAssert(NO, @"Label not existed.");
 		return;
 	}
-	LabelNameToTimeEventInfoArrayMap::iterator anIter = mLabelNameToTimeEventInfoArrayMap.find(theLabel);
-	if (anIter != mLabelNameToTimeEventInfoArrayMap.end()) {
+	LabelNameToTimeEventInfoArrayMap &aLabelNameToTimeEventInfoArrayMap = *((LabelNameToTimeEventInfoArrayMap*)mLabelNameToTimeEventInfoArrayMap);
+	LabelNameToTimeEventInfoArrayMap::iterator anIter = aLabelNameToTimeEventInfoArrayMap.find(theLabel);
+	if (anIter != aLabelNameToTimeEventInfoArrayMap.end()) {
 		TimeEventInfoArray &aTimeEventInfoArray = anIter->second;
 		for (TimeEventInfoArray::iterator i = aTimeEventInfoArray.begin(); i != aTimeEventInfoArray.end(); i++) {
 			if (i->mEventId == theEventId) {
@@ -832,29 +856,35 @@ void SuperAnimNode::removeTimeEvent(const std::string &theLabel, int theEventId)
 	}
 	
 	// also remove in the current time event info array
-	for (TimeEventInfoArray::iterator i = mCurTimeEventInfoArray.begin(); i != mCurTimeEventInfoArray.end(); i++) {
+	TimeEventInfoArray &aCurTimeEventInfoArray = *((TimeEventInfoArray*)mCurTimeEventInfoArray);
+	for (TimeEventInfoArray::iterator i = aCurTimeEventInfoArray.begin(); i != aCurTimeEventInfoArray.end(); i++) {
 		if (i->mLabelName == theLabel &&\
 			i->mEventId == theEventId) {
-			mCurTimeEventInfoArray.erase(i);
+			aCurTimeEventInfoArray.erase(i);
 			break;
 		}
 	}
 }
 
-bool SuperAnim::LoadAnimFileExt(const std::string &theAbsAnimFile){
+
+
++(BOOL) LoadAnimFileExt:(const char*) theAbsAnimFile{
 	// try to load the sprite sheet file
-	std::string aSpriteSheetFileFullPath = theAbsAnimFile.substr(0, theAbsAnimFile.find_last_of('.') + 1) + "plist";
+	std::string anAbsAnimFile = theAbsAnimFile;
+	std::string aSpriteSheetFileFullPath = anAbsAnimFile.substr(0, anAbsAnimFile.find_last_of('.') + 1) + "plist";
 	if (hasFile(aSpriteSheetFileFullPath)) {
-		CCSpriteFrameCache::sharedSpriteFrameCache()->addSpriteFramesWithFile(aSpriteSheetFileFullPath.c_str());
+		[[CCSpriteFrameCache sharedSpriteFrameCache] addSpriteFramesWithFile:[NSString stringWithCString:aSpriteSheetFileFullPath.c_str() encoding:NSUTF8StringEncoding]];
 	}
 	return LoadAnimFile(theAbsAnimFile);
 }
 
-void SuperAnim::UnloadAnimFileExt(const std::string &theAbsAnimFile){
++(void) UnloadAnimFileExt:(const char*) theAbsAnimFile{
 	// try to unload the sprite sheet file
-	std::string aSpriteSheetFileFullPath = theAbsAnimFile.substr(0, theAbsAnimFile.find_last_of('.') + 1) + "plist";
+	std::string anAbsAnimFile = theAbsAnimFile;
+	std::string aSpriteSheetFileFullPath = anAbsAnimFile.substr(0, anAbsAnimFile.find_last_of('.') + 1) + "plist";
 	if (hasFile(aSpriteSheetFileFullPath)) {
-		CCSpriteFrameCache::sharedSpriteFrameCache()->removeSpriteFramesFromFile(aSpriteSheetFileFullPath.c_str());
+		[[CCSpriteFrameCache sharedSpriteFrameCache] removeSpriteFramesFromFile:[NSString stringWithCString:aSpriteSheetFileFullPath.c_str() encoding:NSUTF8StringEncoding]];
 	}
 	return UnloadAnimFile(theAbsAnimFile);
 }
+@end

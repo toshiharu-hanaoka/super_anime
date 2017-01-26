@@ -10,19 +10,19 @@
 #include <string>
 #import "SuperAnim.h"
 
-@implementation SuperAnimNode
+@implementation SuperAnimNode_bridge
 
 -(id)init {
     self = [super init];
     return self;
 }
 
-+(SuperAnimNode*)create:(NSString*)theAbsAnimFile
++(SuperAnimNode_bridge*)create:(NSString*)theAbsAnimFile
                   theId:(int)theId
-             theListener:(SuperAnimNodeListener*)theListener {
+             theListener:(id<SuperAnimNodeListener>)theListener {
     //for test
-    SuperAnimNode *node = [SuperAnimNode init];
-    node->_obj = (void*)SuperAnim::SuperAnimNode::create("File",1,nil);
+    SuperAnimNode_bridge *node = [SuperAnimNode init];
+    node->_obj = [SuperAnimNode create:@"xxx" id:theId listener:theListener];
     return node;
 }
 

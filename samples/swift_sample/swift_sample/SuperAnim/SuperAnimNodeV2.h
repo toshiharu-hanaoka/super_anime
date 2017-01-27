@@ -24,6 +24,7 @@
 //  THE SOFTWARE.
 //
 #import "cocos2d.h"
+#import <SpriteKit/SpriteKit.h>
 
 @protocol SuperAnimNodeListener <NSObject>
 

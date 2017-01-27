@@ -13,6 +13,10 @@ class GameViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        //#### init_cocos2d
+        SuperAnimNode_cocos2d.init_cocos2d()
+        
 
         if let scene = GameScene(fileNamed:"GameScene") {
             // Configure the view.

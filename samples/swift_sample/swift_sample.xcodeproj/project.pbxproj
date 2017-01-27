@@ -123,6 +123,9 @@
 		E5821DF71E39A560004DCCA0 /* LICENSE_CocosDenshion.txt in Resources */ = {isa = PBXBuildFile; fileRef = E5821D8E1E39A560004DCCA0 /* LICENSE_CocosDenshion.txt */; };
 		E5821DF81E39A560004DCCA0 /* LICENSE_Kazmath.txt in Resources */ = {isa = PBXBuildFile; fileRef = E5821D8F1E39A560004DCCA0 /* LICENSE_Kazmath.txt */; };
 		E58220961E39CABB004DCCA0 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = E58220951E39CABB004DCCA0 /* libz.tbd */; };
+		E59B139D1E39E2D9004A0083 /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E59B139C1E39E2D9004A0083 /* OpenGLES.framework */; };
+		E59B139F1E3AE1E1004A0083 /* auto_sync_resource in Resources */ = {isa = PBXBuildFile; fileRef = E59B139E1E3AE1E1004A0083 /* auto_sync_resource */; };
+		E59B13A21E3B4B14004A0083 /* SuperAnim_Layer.mm in Sources */ = {isa = PBXBuildFile; fileRef = E59B13A11E3B4B14004A0083 /* SuperAnim_Layer.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -374,6 +377,10 @@
 		E5821D8E1E39A560004DCCA0 /* LICENSE_CocosDenshion.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE_CocosDenshion.txt; sourceTree = "<group>"; };
 		E5821D8F1E39A560004DCCA0 /* LICENSE_Kazmath.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE_Kazmath.txt; sourceTree = "<group>"; };
 		E58220951E39CABB004DCCA0 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		E59B139C1E39E2D9004A0083 /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
+		E59B139E1E3AE1E1004A0083 /* auto_sync_resource */ = {isa = PBXFileReference; lastKnownFileType = folder; name = auto_sync_resource; path = ../../../auto_sync_resource; sourceTree = "<group>"; };
+		E59B13A01E3B4972004A0083 /* SuperAnim_Layer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SuperAnim_Layer.h; path = SuperAnim/SuperAnim_Layer.h; sourceTree = "<group>"; };
+		E59B13A11E3B4B14004A0083 /* SuperAnim_Layer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = SuperAnim_Layer.mm; path = SuperAnim/SuperAnim_Layer.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -381,6 +388,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E59B139D1E39E2D9004A0083 /* OpenGLES.framework in Frameworks */,
 				E58220961E39CABB004DCCA0 /* libz.tbd in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -391,6 +399,7 @@
 		E5821C1D1E35FA84004DCCA0 = {
 			isa = PBXGroup;
 			children = (
+				E59B139C1E39E2D9004A0083 /* OpenGLES.framework */,
 				E58220951E39CABB004DCCA0 /* libz.tbd */,
 				E5821C281E35FA84004DCCA0 /* swift_sample */,
 				E5821C271E35FA84004DCCA0 /* Products */,
@@ -409,12 +418,7 @@
 		E5821C281E35FA84004DCCA0 /* swift_sample */ = {
 			isa = PBXGroup;
 			children = (
-				E5821C911E38977E004DCCA0 /* SuperAnim.h */,
-				E5821C921E38977E004DCCA0 /* SuperAnim.mm */,
-				E5821C931E38977E004DCCA0 /* SuperAnimCommon.h */,
-				E5821C941E38977E004DCCA0 /* SuperAnimCore.cpp */,
-				E5821C951E38977E004DCCA0 /* SuperAnimNodeV2.h */,
-				E5821C961E38977E004DCCA0 /* SuperAnimNodeV2.mm */,
+				E58220971E39CC6C004DCCA0 /* SuperAnim */,
 				E5821C291E35FA84004DCCA0 /* AppDelegate.swift */,
 				E5821C2B1E35FA84004DCCA0 /* GameScene.sks */,
 				E5821C2D1E35FA84004DCCA0 /* GameScene.swift */,
@@ -423,6 +427,7 @@
 				E5821C341E35FA84004DCCA0 /* Assets.xcassets */,
 				E5821C361E35FA84004DCCA0 /* LaunchScreen.storyboard */,
 				E5821C391E35FA84004DCCA0 /* Info.plist */,
+				E59B139E1E3AE1E1004A0083 /* auto_sync_resource */,
 				E5821C9C1E39A560004DCCA0 /* libs */,
 			);
 			path = swift_sample;
@@ -762,6 +767,21 @@
 			path = GL;
 			sourceTree = "<group>";
 		};
+		E58220971E39CC6C004DCCA0 /* SuperAnim */ = {
+			isa = PBXGroup;
+			children = (
+				E5821C911E38977E004DCCA0 /* SuperAnim.h */,
+				E5821C921E38977E004DCCA0 /* SuperAnim.mm */,
+				E5821C931E38977E004DCCA0 /* SuperAnimCommon.h */,
+				E5821C941E38977E004DCCA0 /* SuperAnimCore.cpp */,
+				E5821C951E38977E004DCCA0 /* SuperAnimNodeV2.h */,
+				E5821C961E38977E004DCCA0 /* SuperAnimNodeV2.mm */,
+				E59B13A01E3B4972004A0083 /* SuperAnim_Layer.h */,
+				E59B13A11E3B4B14004A0083 /* SuperAnim_Layer.mm */,
+			);
+			name = SuperAnim;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -822,6 +842,7 @@
 			files = (
 				E5821DF71E39A560004DCCA0 /* LICENSE_CocosDenshion.txt in Resources */,
 				E5821DE81E39A560004DCCA0 /* ChangeLog in Resources */,
+				E59B139F1E3AE1E1004A0083 /* auto_sync_resource in Resources */,
 				E5821C2C1E35FA84004DCCA0 /* GameScene.sks in Resources */,
 				E5821DE91E39A560004DCCA0 /* CMakeLists.txt in Resources */,
 				E5821C381E35FA84004DCCA0 /* LaunchScreen.storyboard in Resources */,
@@ -869,6 +890,7 @@
 				E5821DCB1E39A560004DCCA0 /* CCTransitionPageTurn.m in Sources */,
 				E5821DA41E39A560004DCCA0 /* CCDrawingPrimitives.m in Sources */,
 				E5821DF21E39A560004DCCA0 /* utility.c in Sources */,
+				E59B13A21E3B4B14004A0083 /* SuperAnim_Layer.mm in Sources */,
 				E5821DA21E39A560004DCCA0 /* ccDeprecated.m in Sources */,
 				E5821DF51E39A560004DCCA0 /* vec4.c in Sources */,
 				E5821DCA1E39A560004DCCA0 /* CCTransition.m in Sources */,

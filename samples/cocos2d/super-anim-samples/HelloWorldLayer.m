@@ -58,24 +58,25 @@ const char* SAM_NO_FLICKER = "no-flicker/no-flicker.sam";
 		CCLayerColor* aBg = [CCLayerColor layerWithColor:ccc4(128, 128, 255, 255)];
 		[self addChild: aBg];
 		
-		NSString* anAnimFileFullPath = [[CCFileUtils sharedFileUtils] fullPathFromRelativePath:[NSString stringWithCString:SAM_NO_FLICKER encoding:NSUTF8StringEncoding]];
+		NSString* anAnimFileFullPath = [[CCFileUtils sharedFileUtils] fullPathFromRelativePath:[NSString stringWithCString:SAM_FISH encoding:NSUTF8StringEncoding]];
+        NSLog(@"%@",anAnimFileFullPath);
         //NSString* anAnimFileFullPath = [[CCFileUtils sharedFileUtils] fullPathFromRelativePath:[NSString stringWithCString:SAM_FISH_50 encoding:NSUTF8StringEncoding]];
 		
 		mAnimNode[kAnimAttacker] = [SuperAnimNode create:anAnimFileFullPath id:kAnimAttacker listener:self];
 		[self addChild:mAnimNode[kAnimAttacker]];
 		mAnimNode[kAnimAttacker].position = ccp(size.width * 0.25f, size.height * 0.5f);
-		[mAnimNode[kAnimAttacker] PlaySection:@"right_idle" isLoop:NO];
+		[mAnimNode[kAnimAttacker] PlaySection:@"idle" isLoop:NO];
 		
 		mAnimNode[kAnimAttacked] = [SuperAnimNode create:anAnimFileFullPath id:kAnimAttacked listener:self];
 		[self addChild:mAnimNode[kAnimAttacked]];
 		mAnimNode[kAnimAttacked].position = ccp(size.width * 0.5f, size.height * 0.5f);
-		[mAnimNode[kAnimAttacked] PlaySection:@"left_idle" isLoop:NO];
+		[mAnimNode[kAnimAttacked] PlaySection:@"idle" isLoop:NO];
 		
 		
 		mAnimNode[kAnimStandAlone] = [SuperAnimNode create:anAnimFileFullPath id:kAnimStandAlone listener:nil];
 		[self addChild:mAnimNode[kAnimStandAlone]];
 		mAnimNode[kAnimStandAlone].position = ccp(size.width * 0.5f, size.height * 0.25f);
-		[mAnimNode[kAnimStandAlone] PlaySection:@"left_idle" isLoop:YES];
+		[mAnimNode[kAnimStandAlone] PlaySection:@"idle" isLoop:YES];
 		
 		CCLabelTTF* aTip = [CCLabelTTF labelWithString:@"Tap to add/remove time event" fontName:@"Arial" fontSize:24];
 		[self addChild:aTip];
@@ -103,11 +104,11 @@ const char* SAM_NO_FLICKER = "no-flicker/no-flicker.sam";
 	
 	if (shouldAddTimeEvent) {
 		shouldAddTimeEvent = NO;
-		[mAnimNode[kAnimAttacker] registerTimeEvent:@"right_doubleattack" timeFactor:0.9f timeEventId:0];
-		[mAnimNode[kAnimAttacker] PlaySection:@"right_doubleattack" isLoop:NO];
+		//[mAnimNode[kAnimAttacker] registerTimeEvent:@"attack" timeFactor:0.9f timeEventId:0];
+		[mAnimNode[kAnimAttacker] PlaySection:@"active" isLoop:NO];
 	} else if (!shouldAddTimeEvent){
-		[mAnimNode[kAnimAttacker] removeTimeEvent:@"right_doubleattack" timeEventId:0];
-		[mAnimNode[kAnimAttacker] PlaySection:@"right_idle" isLoop:NO];
+		//[mAnimNode[kAnimAttacker] removeTimeEvent:@"attack" timeEventId:0];
+		[mAnimNode[kAnimAttacker] PlaySection:@"active" isLoop:NO];
 		shouldAddTimeEvent = YES;
 	}
 }

@@ -16,7 +16,7 @@
 @end
 
 @interface SuperAnimNode_cocos2d : NSObject
-+(void)init_cocos2d;
++(UIView*)init_cocos2d;
 @end
 
 @interface SuperAnimNode_bridge : SKNode
@@ -27,7 +27,7 @@
 +(SuperAnimNode_bridge*)create:(NSString*)theAbsAnimFile
                        theId:(int)theId
                        theListener:(SuperAnimNodeListener*)theListener;
-
++(void)update:(CFTimeInterval)interval;
 -(void)setPosition:(CGPoint)position;
 -(void)playSection:(NSString*)theLabel
               loop:(bool)isLoop;

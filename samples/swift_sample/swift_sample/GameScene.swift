@@ -41,7 +41,7 @@ class GameScene: SKScene {
         let WinSize = UIScreen.mainScreen().bounds.size
         sprite = SuperAnimNode_bridge.create(filepath, theId: 1, theListener: nil)
         sprite.position = CGPoint(x: WinSize.width/2,y: WinSize.height/2)
-        sprite.playSection("idle",loop:false)
+        sprite.playSection("idle",loop:true)
         self.addChild(sprite);
     }
     
@@ -73,5 +73,6 @@ class GameScene: SKScene {
    
     override func update(currentTime: CFTimeInterval) {
         /* Called before each frame is rendered */
+        SuperAnimNode_bridge.update(currentTime)
     }
 }

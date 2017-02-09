@@ -12,11 +12,14 @@
 #import "cocos2d.h"
 #import "SuperAnim_Layer.h"
 
+static CCScene *static_scene;
+
 @implementation SuperAnimNode_cocos2d
-+(void)init_cocos2d {
-    // Create the main window
-    UIWindow *window_ = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
++(UIView*)init_cocos2d {
     
+    // Create the main window
+    //UIWindow *window_ = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    UIWindow *window_ = [[[UIApplication sharedApplication] delegate] window];
     
     // Create an CCGLView with a RGB565 color buffer, and a depth buffer of 0-bits
     CCGLView *glView = [CCGLView viewWithFrame:[window_ bounds]
@@ -28,8 +31,8 @@
                                numberOfSamples:0];
     
     CCDirector* director_ = (CCDirectorIOS*) [CCDirector sharedDirector];
-    
-    director_.wantsFullScreenLayout = YES;
+
+    //director_.wantsFullScreenLayout = YES;
     
     // Display FSP and SPF
     [director_ setDisplayStats:YES];
@@ -72,15 +75,35 @@
     //Layer
     CCScene *scene = [SuperAnim_Layer node];
     
+    static_scene = scene;
+    
     [director_ pushScene:scene];
     
+    /*
+    UINavigationController* navController_ = [[UINavigationController alloc] initWithRootViewController:director_];
+    navController_.navigationBarHidden = YES;
+    
+    // set the Navigation Controller as the root view controller
+    //	[window_ addSubview:navController_.view];	// Generates flicker.
+    [window_ setRootViewController:navController_];
+    
+    // make main window visible
+    [window_ makeKeyAndVisible];
+    */
+    
+    return glView;
 }
 @end
+
+static NSMutableArray *nodes=nil;
 
 @implementation SuperAnimNode_bridge
 
 -(id)init {
     self = [super init];
+    if (nodes == nil) {
+        nodes = [NSMutableArray array];
+    }
     return self;
 }
 
@@ -93,11 +116,26 @@
     
     //_objをつなげる　### updateが呼ばれないので呼ばれるようにしたい。
     //SuperAnim_Layerにつなげるとどうか検証中
-    [CCDirector sharedDirector];
     
-    //[self addChild:node->_obj];
+    [static_scene addChild:node->_obj];
+    
+    
+    //nodesに追加
+    [nodes addObject:node];
     
     return node;
+}
+
++(void)update:(CFTimeInterval)interval {
+/*
+    if (nodes!=nil) {
+        for(id item in nodes) {
+            SuperAnimNode_bridge *node =(SuperAnimNode_bridge*)item;
+            SuperAnimNode *_node = (SuperAnimNode*)node->_obj;
+            [_node update:(ccTime)interval];
+        }
+    }
+*/
 }
 
 -(void)setPosition:(CGPoint)position {

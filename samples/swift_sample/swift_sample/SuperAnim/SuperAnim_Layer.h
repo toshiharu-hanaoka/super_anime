@@ -13,7 +13,7 @@
 #import "SuperAnimNodeV2.h"
 
 //@interface SuperAnim_Layer : CCLayer <SuperAnimNodeListener>
-@interface SuperAnim_Layer : CCLayer
+@interface SuperAnim_Layer : CCLayerColor
 {
     //SuperAnimNode* mAnimNode[100];
 }

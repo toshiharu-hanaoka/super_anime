@@ -26,6 +26,7 @@ class GameScene: SKScene {
     var sprite : SuperAnimNode_bridge! = nil
     
     override func didMoveToView(view: SKView) {
+        
         /* Setup your scene here */
         let myLabel = SKLabelNode(fontNamed:"Chalkduster")
         myLabel.text = "Hello, World!"
@@ -43,36 +44,19 @@ class GameScene: SKScene {
         sprite.position = CGPoint(x: WinSize.width/2,y: WinSize.height/2)
         sprite.playSection("idle",loop:true)
         self.addChild(sprite);
+        
+        //cocos_view.opaque = false
+        self.view?.addSubview(cocos_view);
+
     }
     
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
        /* Called when a touch begins */
-        
-        sprite.playSection("active",loop:false);
+       sprite.playSection("active",loop:false);
 
-        /*
-        for touch in touches {
-            //let location = touch.locationInNode(self)
-        
-            //let sprite = SKSpriteNode(imageNamed:"Spaceship")
-            //let sprite = SuperAnimNode_bridge.create(SAM_FISH, theId: 1, theListener: nil)
-            
-            
-            sprite.xScale = 0.5
-            sprite.yScale = 0.5
-            sprite.position = location
-            
-            let action = SKAction.rotateByAngle(CGFloat(M_PI), duration:1)
-            
-            sprite.runAction(SKAction.repeatActionForever(action))
-            
-            self.addChild(sprite)
-        }
-        */
     }
    
     override func update(currentTime: CFTimeInterval) {
         /* Called before each frame is rendered */
-        SuperAnimNode_bridge.update(currentTime)
     }
 }

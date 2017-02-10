@@ -54,7 +54,7 @@
 			context_ = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
 		else
 			context_ = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2 sharegroup:sharegroup];
-
+        
         if (!context_ || ![EAGLContext setCurrentContext:context_] )
         {
             [self release];

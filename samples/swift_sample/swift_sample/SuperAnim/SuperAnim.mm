@@ -20,10 +20,12 @@ static CCScene *static_scene;
     // Create the main window
     //UIWindow *window_ = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
     UIWindow *window_ = [[[UIApplication sharedApplication] delegate] window];
+    CGRect rect = [window_ bounds];
     
     // Create an CCGLView with a RGB565 color buffer, and a depth buffer of 0-bits
-    CCGLView *glView = [CCGLView viewWithFrame:[window_ bounds]
-                                   pixelFormat:kEAGLColorFormatRGB565	//kEAGLColorFormatRGBA8
+    CCGLView *glView = [CCGLView viewWithFrame:rect
+                                   //pixelFormat:kEAGLColorFormatRGB565	//kEAGLColorFormatRGBA8
+                                   pixelFormat:kEAGLColorFormatRGBA8
                                    depthFormat:0	//GL_DEPTH_COMPONENT24_OES
                             preserveBackbuffer:NO
                                     sharegroup:nil
@@ -91,19 +93,24 @@ static CCScene *static_scene;
     [window_ makeKeyAndVisible];
     */
     
+    glView.userInteractionEnabled = NO;
+    glView.opaque = NO;
+    
     return glView;
 }
 @end
 
-static NSMutableArray *nodes=nil;
+//static NSMutableArray *nodes=nil;
 
 @implementation SuperAnimNode_bridge
 
 -(id)init {
     self = [super init];
+    /*
     if (nodes == nil) {
         nodes = [NSMutableArray array];
     }
+     */
     return self;
 }
 
@@ -115,19 +122,19 @@ static NSMutableArray *nodes=nil;
     node->_obj = [SuperAnimNode create:theAbsAnimFile id:theId listener:theListener];
     
     //_objをつなげる　### updateが呼ばれないので呼ばれるようにしたい。
-    //SuperAnim_Layerにつなげるとどうか検証中
+    //SuperAnim_Layerにつなげるとどうか検証→呼ばれるようになった
     
     [static_scene addChild:node->_obj];
     
     
     //nodesに追加
-    [nodes addObject:node];
+    //[nodes addObject:node];
     
     return node;
 }
 
-+(void)update:(CFTimeInterval)interval {
 /*
++(void)update:(CFTimeInterval)interval {
     if (nodes!=nil) {
         for(id item in nodes) {
             SuperAnimNode_bridge *node =(SuperAnimNode_bridge*)item;
@@ -135,8 +142,8 @@ static NSMutableArray *nodes=nil;
             [_node update:(ccTime)interval];
         }
     }
-*/
 }
+ */
 
 -(void)setPosition:(CGPoint)position {
     SuperAnimNode *obj = (SuperAnimNode*)_obj;

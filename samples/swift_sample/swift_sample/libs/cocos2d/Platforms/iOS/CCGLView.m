@@ -179,7 +179,8 @@ Copyright (C) 2008 Apple Inc. All Rights Reserved.
 	CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
 
 	eaglLayer.opaque = YES;
-	eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
+
+    eaglLayer.drawableProperties = [NSDictionary dictionaryWithObjectsAndKeys:
 									[NSNumber numberWithBool:preserveBackbuffer_], kEAGLDrawablePropertyRetainedBacking,
 									pixelformat_, kEAGLDrawablePropertyColorFormat, nil];
 

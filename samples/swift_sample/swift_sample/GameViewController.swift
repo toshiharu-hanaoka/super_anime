@@ -9,15 +9,17 @@
 import UIKit
 import SpriteKit
 
+var cocos_view:(UIView!) = nil
+
 class GameViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
         //#### init_cocos2d
-        let cocos_view:(UIView) = SuperAnimNode_cocos2d.init_cocos2d()
-        self.view.addSubview(cocos_view)
-        NSLog("%f,%f",cocos_view.frame.height,cocos_view.frame.width);
+        cocos_view = SuperAnimNode_cocos2d.init_cocos2d()
+        //self.view.addSubview(cocos_view)
+        //NSLog("%f,%f",cocos_view.frame.height,cocos_view.frame.width);
 
         if let scene = GameScene(fileNamed:"GameScene") {
 

@@ -447,7 +447,7 @@ inline ccV3F_C4B_T2F_Quad operator*(const SuperAnimMatrix3 &theMatrix3, const cc
 		mCurTimeEventInfoArray = new TimeEventInfoArray();
 		
 		self.contentSize = CC_SIZE_PIXELS_TO_POINTS(CGSizeMake(aAnimHandler.mWidth, aAnimHandler.mHeight));
-		
+        
 		mId = theId;
 		mListener = theListener;
 		mAnimState = kAnimStateInitialized;

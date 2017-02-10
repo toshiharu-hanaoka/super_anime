@@ -36,3 +36,11 @@
 
     return self;
 }
+
+-(void)addChild_node:(SuperAnimNode*)obj
+{
+    [self addChild:obj];
+}
+
+
+@end

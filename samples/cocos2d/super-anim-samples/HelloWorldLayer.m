@@ -67,6 +67,7 @@ const char* SAM_NO_FLICKER = "no-flicker/no-flicker.sam";
 		mAnimNode[kAnimAttacker].position = ccp(size.width * 0.25f, size.height * 0.5f);
 		[mAnimNode[kAnimAttacker] PlaySection:@"idle" isLoop:NO];
 		
+        
 		mAnimNode[kAnimAttacked] = [SuperAnimNode create:anAnimFileFullPath id:kAnimAttacked listener:self];
 		[self addChild:mAnimNode[kAnimAttacked]];
 		mAnimNode[kAnimAttacked].position = ccp(size.width * 0.5f, size.height * 0.5f);

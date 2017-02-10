@@ -12,10 +12,14 @@
 #import "cocos2d.h"
 #import "SuperAnimNodeV2.h"
 
-@interface SuperAnim_Layer : CCLayer <SuperAnimNodeListener>
+//@interface SuperAnim_Layer : CCLayer <SuperAnimNodeListener>
+@interface SuperAnim_Layer : CCLayer
 {
-    SuperAnimNode* mAnimNode[100];
+    //SuperAnimNode* mAnimNode[100];
 }
+
+-(void)addChild_node:(SuperAnimNode*)obj;
+
 @end
 
 

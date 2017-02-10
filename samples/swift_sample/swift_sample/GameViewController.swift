@@ -15,12 +15,15 @@ class GameViewController: UIViewController {
         super.viewDidLoad()
         
         //#### init_cocos2d
-        SuperAnimNode_cocos2d.init_cocos2d()
-        
+        let cocos_view:(UIView) = SuperAnimNode_cocos2d.init_cocos2d()
+        self.view.addSubview(cocos_view)
+        NSLog("%f,%f",cocos_view.frame.height,cocos_view.frame.width);
 
         if let scene = GameScene(fileNamed:"GameScene") {
+
             // Configure the view.
             let skView = self.view as! SKView
+            //let skView = cocos_view as! SKView
             skView.showsFPS = true
             skView.showsNodeCount = true
             
@@ -31,7 +34,9 @@ class GameViewController: UIViewController {
             scene.scaleMode = .AspectFill
             
             skView.presentScene(scene)
+            
         }
+
     }
 
     override func shouldAutorotate() -> Bool {

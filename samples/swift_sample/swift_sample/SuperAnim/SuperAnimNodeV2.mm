@@ -509,6 +509,7 @@ inline ccV3F_C4B_T2F_Quad operator*(const SuperAnimMatrix3 &theMatrix3, const cc
 	static SuperAnimObjDrawInfo sAnimObjDrawnInfo;
 	float aPixelToPointScale = 1.0f / CC_CONTENT_SCALE_FACTOR();
 	float anAnimContentHeightInPixel = self.contentSize.height * CC_CONTENT_SCALE_FACTOR();
+    //NSLog(@"height:%f",anAnimContentHeightInPixel);
 	BeginIterateAnimObjDrawInfo();
 	while (IterateAnimObjDrawInfo(anAnimHandler, sAnimObjDrawnInfo)) {
 		if (sAnimObjDrawnInfo.mSpriteId == InvalidSuperAnimSpriteId) {

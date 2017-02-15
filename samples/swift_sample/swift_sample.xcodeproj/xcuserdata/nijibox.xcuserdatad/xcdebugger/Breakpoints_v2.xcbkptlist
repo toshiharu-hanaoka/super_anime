@@ -122,11 +122,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "swift_sample/SuperAnim/SuperAnimNodeV2.mm"
-            timestampString = "507199925.751677"
+            timestampString = "508658115.666179"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "657"
-            endingLineNumber = "657"
+            startingLineNumber = "658"
+            endingLineNumber = "658"
             landmarkName = "-update:"
             landmarkType = "5">
          </BreakpointContent>

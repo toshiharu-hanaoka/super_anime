@@ -67,17 +67,17 @@ unsigned char* GetFileData(const char* pszFileName, const char* pszMode, unsigne
 class SuperAnimSprite
 {
 public:
-	CCTexture2D *mTexture;
+	CCTexture *mTexture;
 	ccV3F_C4B_T2F_Quad mQuad;
 	std::string mStringId;
 public:
 	SuperAnimSprite();
-	SuperAnimSprite(CCTexture2D *theTexture);
-	SuperAnimSprite(CCTexture2D *theTexture, CGRect theTextureRect);
+	SuperAnimSprite(CCTexture *theTexture);
+	SuperAnimSprite(CCTexture *theTexture, CGRect theTextureRect);
 	~SuperAnimSprite();
 	
-	void SetTexture(CCTexture2D *theTexture);
-	void SetTexture(CCTexture2D *theTexture, CGRect theTextureRect);
+	void SetTexture(CCTexture *theTexture);
+	void SetTexture(CCTexture *theTexture, CGRect theTextureRect);
 };
 
 typedef std::map<SuperAnimSpriteId, SuperAnimSprite *> IdToSuperAnimSpriteMap;
@@ -107,14 +107,14 @@ SuperAnimSprite::SuperAnimSprite()
 	memset(&mQuad, 0, sizeof(mQuad));
 }
 
-SuperAnimSprite::SuperAnimSprite(CCTexture2D *theTexture)
+SuperAnimSprite::SuperAnimSprite(CCTexture *theTexture)
 {
 	mTexture = NULL;
 	memset(&mQuad, 0, sizeof(mQuad));
 	SetTexture(theTexture);
 }
 
-SuperAnimSprite::SuperAnimSprite(CCTexture2D *theTexture, CGRect theTextureRect)
+SuperAnimSprite::SuperAnimSprite(CCTexture *theTexture, CGRect theTextureRect)
 {
 	mTexture = NULL;
 	memset(&mQuad, 0, sizeof(mQuad));
@@ -130,14 +130,14 @@ SuperAnimSprite::~SuperAnimSprite()
 	}
 }
 
-void SuperAnimSprite::SetTexture(CCTexture2D *theTexture)
+void SuperAnimSprite::SetTexture(CCTexture *theTexture)
 {
 	CGRect aRect = CGRectZero;
 	aRect.size = [theTexture contentSize];
 	SetTexture(theTexture, aRect);
 }
 
-void SuperAnimSprite::SetTexture(CCTexture2D *theTexture, CGRect theTextureRect)
+void SuperAnimSprite::SetTexture(CCTexture *theTexture, CGRect theTextureRect)
 {
 	if (theTexture == NULL)
 	{
@@ -156,8 +156,8 @@ void SuperAnimSprite::SetTexture(CCTexture2D *theTexture, CGRect theTextureRect)
 	
 	// Set Texture coordinates
 	CGRect theTexturePixelRect = CC_RECT_POINTS_TO_PIXELS(theTextureRect);
-	float aTextureWidth = [mTexture pixelsWide];
-	float aTextureHeight = [mTexture pixelsHigh];
+    float aTextureWidth = mTexture.pixelWidth;
+    float aTextureHeight = mTexture.pixelHeight;
 	
 	float aLeft, aRight, aTop, aBottom;
 	aLeft = theTexturePixelRect.origin.x / aTextureWidth;
@@ -250,7 +250,7 @@ bool SuperAnimSpriteMgr::IterateSpriteId(SuperAnimSpriteId &theCurSpriteId){
 	return true;
 }
 
-CCTexture2D* getTexture(std::string theImageFullPath, CGRect& theTextureRect){
+CCTexture* getTexture(std::string theImageFullPath, CGRect& theTextureRect){
 	// try to load from sprite sheet
 	std::string anImageFileName;
 	int aLastSlashIndex = MAX((int)theImageFullPath.find_last_of('/'), (int)theImageFullPath.find_last_of('\\'));
@@ -265,8 +265,9 @@ CCTexture2D* getTexture(std::string theImageFullPath, CGRect& theTextureRect){
 		return [aSpriteFrame texture];
 	}
 	
-	CCTexture2D* aTexture = [[CCTextureCache sharedTextureCache] addImage:[NSString stringWithCString:(theImageFullPath.c_str()) encoding:NSUTF8StringEncoding]];
-	theTextureRect.origin = CGPointZero;
+	CCTexture* aTexture = [[CCTextureCache sharedTextureCache] addImage:[NSString stringWithCString:(theImageFullPath.c_str()) encoding:NSUTF8StringEncoding]];
+    
+    theTextureRect.origin = CGPointZero;
 	theTextureRect.size = [aTexture contentSize];
 	return aTexture;
 }
@@ -303,7 +304,7 @@ SuperAnimSpriteId SuperAnimSpriteMgr::LoadSuperAnimSprite(std::string theSpriteN
 	}
 	// load the physical sprite
 	CGRect aTextureRect;
-	CCTexture2D *aTexture = getTexture(anImageFile.c_str(), aTextureRect);
+	CCTexture *aTexture = getTexture(anImageFile.c_str(), aTextureRect);
 	if (aTexture == NULL) {
 		assert(false && "Failed to get texture.");
 		return InvalidSuperAnimSpriteId;
@@ -456,9 +457,10 @@ inline ccV3F_C4B_T2F_Quad operator*(const SuperAnimMatrix3 &theMatrix3, const cc
 		mIsLoop = NO;
 		
 		// shader program
-		self.shaderProgram = [[CCShaderCache sharedShaderCache] programForKey:kCCShader_PositionTextureColor];
-		
-		[self scheduleUpdate];
+		//self.shaderProgram = [[CCShaderCache sharedShaderCache] programForKey:kCCShader_PositionTextureColor];
+        self.shader = [CCShader positionTextureColorShader];
+        
+		//[self scheduleUpdate];
 		
 		self.anchorPoint = ccp(0.5f, 0.5f);
 	}
@@ -546,7 +548,7 @@ inline ccV3F_C4B_T2F_Quad operator*(const SuperAnimMatrix3 &theMatrix3, const cc
 		//sAnimObjDrawnInfo.mTransform.mMatrix.m12 *= -1;
 		
 		// Be sure that you call this macro every draw
-		CC_NODE_DRAW_SETUP();
+		//CC_NODE_DRAW_SETUP();
 		
 		ccV3F_C4B_T2F_Quad aOriginQuad = aSprite->mQuad;
 		aSprite->mQuad = sAnimObjDrawnInfo.mTransform.mMatrix * aSprite->mQuad;
@@ -575,8 +577,9 @@ inline ccV3F_C4B_T2F_Quad operator*(const SuperAnimMatrix3 &theMatrix3, const cc
 		// draw
 		if (!mUseSpriteSheet)
 		{
-			ccGLBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-			ccGLBindTexture2D([aSprite->mTexture name]);
+			glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+			//ccGLBindTexture2D([aSprite->mTexture name]);
+            glBindTexture(GL_TEXTURE_2D,[aSprite->mTexture name]);
 			
 			//
 			// Attributes
@@ -653,7 +656,7 @@ inline ccV3F_C4B_T2F_Quad operator*(const SuperAnimMatrix3 &theMatrix3, const cc
 	}
 }
 
--(void) update:(ccTime)time{
+-(void) update:(CCTime)time{
 	if (mAnimState != kAnimStatePlaying)
 	{
 		return;

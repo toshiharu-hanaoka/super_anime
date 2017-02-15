@@ -75,6 +75,7 @@
 #import "CCSpriteFrameCache.h"
 #import "CCTransition.h"
 #import "CCTexture.h"
+#import "CCtextureCache.h" //## add by tom
 #import "CCTexturePVR.h"
 #import "UITouch+CC.h"
 

@@ -106,22 +106,6 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "swift_sample/SuperAnim/SuperAnimNodeV2.mm"
-            timestampString = "507199904.424581"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "461"
-            endingLineNumber = "461"
-            landmarkName = "-initWithAnimFile:id:listener:"
-            landmarkType = "5">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "swift_sample/SuperAnim/SuperAnimNodeV2.mm"
             timestampString = "507199925.751677"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"

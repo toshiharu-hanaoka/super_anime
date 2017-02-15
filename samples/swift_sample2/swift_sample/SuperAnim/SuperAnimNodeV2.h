@@ -47,7 +47,7 @@
 	// support sprite sheet
 	NSString* mSpriteSheetFileFullPath;
 	BOOL mUseSpriteSheet;
-	CCTexture2D* mSpriteSheet;
+	CCTexture* mSpriteSheet;
 	BOOL mIsFlipX;
 	BOOL mIsFlipY;
 	float mSpeedFactor;
@@ -59,7 +59,7 @@
 +(id) create:(NSString*) theAbsAnimFile id:(int) theId listener:(id<SuperAnimNodeListener>) theListener;
 -(id) initWithAnimFile:(NSString*) theAbsAnimFile id:(int) theId listener:(id<SuperAnimNodeListener>) theListener;
 -(void)dealloc;
--(void) update: (ccTime) time;
+-(void) update: (CCTime) time;
 -(BOOL) PlaySection:(NSString*)	theLabel isLoop:(BOOL) isLoop;
 -(void) Pause;
 -(void) Resume;

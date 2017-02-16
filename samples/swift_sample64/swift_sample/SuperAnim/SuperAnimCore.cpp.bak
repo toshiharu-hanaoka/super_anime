@@ -495,13 +495,10 @@ namespace SuperAnim {
 	
 	long BufferReader::ReadLong() const
 	{
-		// bug fix:
-		// I assume that converter only support 32bit.
-		typedef int32_t LONG;
-		LONG aLong = ReadByte();
-		aLong |= ((LONG) ReadByte()) << 8;
-		aLong |= ((LONG) ReadByte()) << 16;
-		aLong |= ((LONG) ReadByte()) << 24;
+		long aLong = ReadByte();
+		aLong |= ((long) ReadByte()) << 8;
+		aLong |= ((long) ReadByte()) << 16;
+		aLong |= ((long) ReadByte()) << 24;
 		
 		return aLong;
 	}
@@ -551,16 +548,11 @@ namespace SuperAnim {
 		
 	typedef std::map<int, SuperAnimObject> IntToSuperAnimObjectMap;
 	bool SuperAnimLabelLess(const SuperAnimLabel& a, const SuperAnimLabel& b){
-		// bug fix:
-		// what was on my mind when I implemented this function???
-		// a little confused...
+		if (a.mStartFrameNum != b.mStartFrameNum) {
+			return a.mStartFrameNum < b.mStartFrameNum;
+		}
 		
-		//		if (a.mStartFrameNum != b.mStartFrameNum) {
-		//			return a.mStartFrameNum < b.mStartFrameNum;
-		//		}
-		//
-		//		return true;
-		return a.mStartFrameNum < b.mStartFrameNum;
+		return true;
 	}
 	bool SuperAnimDefMgr::LoadSuperAnimMainDef(std::string theSuperAnimFile)
 	{

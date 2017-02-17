@@ -23,14 +23,18 @@
 {
     id _obj;
 }
+@property (nonatomic,readwrite) BOOL flipX;
+@property (nonatomic,readwrite) BOOL flipY;
+@property (nonatomic,readwrite) float speedFactor;
 
 +(SuperAnimNode_bridge*)create:(NSString*)theAbsAnimFile
                        theId:(int)theId
                        theListener:(SuperAnimNodeListener*)theListener;
-+(void)update:(CFTimeInterval)interval;
+//+(void)update:(CFTimeInterval)interval;
 -(void)setPosition:(CGPoint)position;
 -(void)playSection:(NSString*)theLabel
               loop:(bool)isLoop;
+
 
 @end
 

@@ -24,8 +24,8 @@ static CCScene *static_scene;
     
     // Create an CCGLView with a RGB565 color buffer, and a depth buffer of 0-bits
     CCGLView *glView = [CCGLView viewWithFrame:rect
-                                   pixelFormat:kEAGLColorFormatRGB565	//kEAGLColorFormatRGBA8
-                                   //pixelFormat:kEAGLColorFormatRGBA8
+                                   //pixelFormat:kEAGLColorFormatRGB565	//kEAGLColorFormatRGBA8
+                                   pixelFormat:kEAGLColorFormatRGBA8
                                    depthFormat:0	//GL_DEPTH_COMPONENT24_OES
                             preserveBackbuffer:NO
                                     sharegroup:nil
@@ -37,7 +37,7 @@ static CCScene *static_scene;
     //director_.wantsFullScreenLayout = YES;
     
     // Display FSP and SPF
-    [director_ setDisplayStats:YES];
+    //[director_ setDisplayStats:YES];
     
     // set FPS at 60
     [director_ setAnimationInterval:1.0/60];
@@ -81,18 +81,7 @@ static CCScene *static_scene;
     
     [director_ pushScene:scene];
     
-    /*
-    UINavigationController* navController_ = [[UINavigationController alloc] initWithRootViewController:director_];
-    navController_.navigationBarHidden = YES;
-    
-    // set the Navigation Controller as the root view controller
-    //	[window_ addSubview:navController_.view];	// Generates flicker.
-    [window_ setRootViewController:navController_];
-    
-    // make main window visible
-    [window_ makeKeyAndVisible];
-    */
-    
+    //glViewを透過にするための処理
     glView.userInteractionEnabled = NO;
     glView.opaque = NO;
     
@@ -121,9 +110,15 @@ static CCScene *static_scene;
     SuperAnimNode_bridge *node = [SuperAnimNode_bridge node];
     node->_obj = [SuperAnimNode create:theAbsAnimFile id:theId listener:theListener];
     
-    //_objをつなげる　### updateが呼ばれないので呼ばれるようにしたい。
-    //SuperAnim_Layerにつなげるとどうか検証→呼ばれるようになった
+    SuperAnimNode *obj = (SuperAnimNode*)node->_obj;
+
+    //size
+    SKSpriteNode *sprite = [SKSpriteNode spriteNodeWithColor:[UIColor colorWithWhite:1.0 alpha:0.0]
+                                                        size:obj.contentSize];
+    [node addChild:sprite];
+    node.zPosition = -1;
     
+    //_objをつなげる　updateが呼ばれないので呼ばれるようするため。
     [static_scene addChild:node->_obj];
     
     
@@ -156,6 +151,42 @@ static CCScene *static_scene;
     SuperAnimNode *obj = (SuperAnimNode*)_obj;
     
     [obj PlaySection:theLabel isLoop:isLoop];
+}
+
+-(void)setFlipX:(BOOL)flipX {
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+
+    obj.flipX = flipX;
+}
+
+-(BOOL)getFlipX {
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+
+    return obj.flipX;
+}
+
+-(void)setFlipY:(BOOL)flipY {
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+    
+    obj.flipY = flipY;
+}
+
+-(BOOL)getFlipY {
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+    
+    return obj.flipY;
+}
+
+-(void)setSpeedFactor:(float)speedFactor{
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+
+    obj.speedFactor = speedFactor;
+}
+
+-(float)getSpeedFactor {
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+
+    return obj.speedFactor;
 }
 
 @end

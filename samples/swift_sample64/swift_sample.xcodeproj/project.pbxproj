@@ -436,8 +436,7 @@
 				E5180B871E5453100022B529 /* LICENSE_CocosDenshion.txt */,
 				E5180B881E5453100022B529 /* LICENSE_Kazmath.txt */,
 			);
-			name = libs;
-			path = swift_sample/libs;
+			path = libs;
 			sourceTree = "<group>";
 		};
 		E5180A831E5453100022B529 /* cocos2d */ = {
@@ -786,7 +785,6 @@
 				E5180A801E5452110022B529 /* CoreText.framework */,
 				E59B139C1E39E2D9004A0083 /* OpenGLES.framework */,
 				E58220951E39CABB004DCCA0 /* libz.tbd */,
-				E5180A821E5453100022B529 /* libs */,
 				E5821C281E35FA84004DCCA0 /* swift_sample */,
 				E5821C271E35FA84004DCCA0 /* Products */,
 				E5821C421E3603C6004DCCA0 /* swift_sample-Bridging-Header.h */,
@@ -814,6 +812,7 @@
 				E5821C361E35FA84004DCCA0 /* LaunchScreen.storyboard */,
 				E5821C391E35FA84004DCCA0 /* Info.plist */,
 				E59B139E1E3AE1E1004A0083 /* auto_sync_resource */,
+				E5180A821E5453100022B529 /* libs */,
 			);
 			path = swift_sample;
 			sourceTree = "<group>";

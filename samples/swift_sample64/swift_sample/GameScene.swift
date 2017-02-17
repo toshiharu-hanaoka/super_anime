@@ -42,6 +42,7 @@ class GameScene: SKScene {
         let WinSize = UIScreen.mainScreen().bounds.size
         sprite = SuperAnimNode_bridge.create(filepath, theId: 1, theListener: nil)
         sprite.position = CGPoint(x: WinSize.width/2,y: WinSize.height/2)
+        sprite.flipX = true;
         sprite.playSection("idle",loop:true)
         self.addChild(sprite);
         

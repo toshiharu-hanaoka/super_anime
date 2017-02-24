@@ -9,15 +9,20 @@
 import UIKit
 import SpriteKit
 
-var cocos_view:(UIView!) = nil
+var swf_view:(UIView!) = nil
 
 class GameViewController: UIViewController {
 
+    override func loadView() {
+        //self.view = SKView(frame: CGRect(x: 0, y: 0, width: 320, height: 480))
+        self.view = SKView(frame: CGRect(x: 0, y: 0, width: 320, height: 568)) //SKViewのサイズをiphoneの画面に合わせる
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         //#### init_cocos2d
-        cocos_view = SuperAnimNode_cocos2d.init_cocos2d()
+        swf_view = SuperAnimNode_cocos2d.init_gl() //これは画面全体のpixel sizeとなる
         //self.view.addSubview(cocos_view)
         //NSLog("%f,%f",cocos_view.frame.height,cocos_view.frame.width);
 
@@ -33,7 +38,17 @@ class GameViewController: UIViewController {
             skView.ignoresSiblingOrder = true
             
             /* Set the scale mode to scale to fit the window */
+            //### ??これがあると座標系が乱れる。何やっているのだろう?
+            // ※SKSceneはデフォルトで1024 x 768のため、どれを指定しても拡大縮小してしまう。
             scene.scaleMode = .AspectFill
+            //scene.scaleMode = .AspectFit
+            //  scene.scaleMode = .ResizeFill
+            //  scene.scaleMode = .Fill
+            
+            // SKSceneサイズをViewサイズに合わせる
+            // これによって表示時のスケーリングを無くすことができる。
+            scene.size = skView.frame.size; //SKSceneのサイズをskViewに合わせる
+                        
             
             skView.presentScene(scene)
             

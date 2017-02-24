@@ -15,12 +15,15 @@
 static CCScene *static_scene;
 
 @implementation SuperAnimNode_cocos2d
-+(UIView*)init_cocos2d {
++(UIView*)init_gl {
     
     // Create the main window
     //UIWindow *window_ = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    UIWindow *window_ = [[[UIApplication sharedApplication] delegate] window];
-    CGRect rect = [window_ bounds];
+    
+    //UIWindow *window_ = [[[UIApplication sharedApplication] delegate] window];
+    //CGRect rect = [window_ bounds];
+    CGRect rect = [[UIScreen mainScreen] bounds];
+    //CGRect rect = base_view.bounds;
     
     // Create an CCGLView with a RGB565 color buffer, and a depth buffer of 0-bits
     CCGLView *glView = [CCGLView viewWithFrame:rect
@@ -89,9 +92,35 @@ static CCScene *static_scene;
 }
 @end
 
+//callback bridge
+@interface SuperAnimNodeListener_bridge : NSObject <SuperAnimNodeListener>
+-(id)init;
+@property (nonatomic,assign) id <SuperAnimNodeDelegate> delegate;
+@end
+
+@implementation SuperAnimNodeListener_bridge
+
+-(id)init {
+    self = [super init];
+    return self;
+}
+
+-(void) OnAnimSectionEnd: (int)theId label:(NSString*) theLabelName
+{
+    //NSLog(@"OnAnimSectionEnd");
+    [_delegate OnAnimSectionEnd:theId label:theLabelName];
+}
+-(void) OnTimeEvent:(int) theId label:(NSString*)theLabelName eventId:(int) theEventId
+{
+    //NSLog(@"OnTimeEvent");
+    [_delegate OnTimeEvent:theId label:theLabelName eventId:theEventId];
+}
+
+@end
+
 //static NSMutableArray *nodes=nil;
 
-@implementation SuperAnimNode_bridge
+@implementation SuperAnimNode_swift
 
 -(id)init {
     self = [super init];
@@ -103,20 +132,36 @@ static CCScene *static_scene;
     return self;
 }
 
-+(SuperAnimNode_bridge*)create:(NSString*)theAbsAnimFile
-                  theId:(int)theId
-             theListener:(id<SuperAnimNodeListener>)theListener {
-    //for test
-    SuperAnimNode_bridge *node = [SuperAnimNode_bridge node];
-    node->_obj = [SuperAnimNode create:theAbsAnimFile id:theId listener:theListener];
++(SuperAnimNode_swift*)create:(NSString*)theAbsAnimFile
+                         theId:(int)theId
+                     listener:(id <SuperAnimNodeDelegate>) theListener
+                         scene:(SKScene*)scene
+{
+    SuperAnimNode_swift *node = [SuperAnimNode_swift node];
+    
+    //listenerの設定
+    if (theListener!=nil) {
+        node->_listener = [[SuperAnimNodeListener_bridge alloc] init];
+        ((SuperAnimNodeListener_bridge*)node->_listener).delegate = theListener;
+    } else {
+        node->_listener = nil;
+    }
+    
+    node->_obj = [SuperAnimNode create:theAbsAnimFile id:theId listener:node->_listener];
+    
+    //座標変換のためにsceneを受け取る
+    node->_scene = scene;
     
     SuperAnimNode *obj = (SuperAnimNode*)node->_obj;
 
-    //size
-    SKSpriteNode *sprite = [SKSpriteNode spriteNodeWithColor:[UIColor colorWithWhite:1.0 alpha:0.0]
+    //タッチするようのNode (alpha=0にすれば見えない)
+    SKSpriteNode *sprite = [SKSpriteNode spriteNodeWithColor:[UIColor colorWithWhite:1.0 alpha:1.0]
                                                         size:obj.contentSize];
+    
+    //sprite.position = CGPointMake(0,0);
+    //sprite.anchorPoint = CGPointMake(0.5,0.5);
     [node addChild:sprite];
-    node.zPosition = -1;
+    node.zPosition = 1000;
     
     //_objをつなげる　updateが呼ばれないので呼ばれるようするため。
     [static_scene addChild:node->_obj];
@@ -142,51 +187,173 @@ static CCScene *static_scene;
 
 -(void)setPosition:(CGPoint)position {
     SuperAnimNode *obj = (SuperAnimNode*)_obj;
-
+    
     obj.position = position;
+    
+    super.position = position;
 }
 
 -(void)playSection:(NSString*)theLabel
-        loop:(bool)isLoop {
+        loop:(bool)isLoop
+{
     SuperAnimNode *obj = (SuperAnimNode*)_obj;
     
     [obj PlaySection:theLabel isLoop:isLoop];
 }
 
--(void)setFlipX:(BOOL)flipX {
+-(void)setFlipX:(BOOL)flipX
+{
     SuperAnimNode *obj = (SuperAnimNode*)_obj;
 
     obj.flipX = flipX;
 }
 
--(BOOL)getFlipX {
+-(BOOL)getFlipX
+{
     SuperAnimNode *obj = (SuperAnimNode*)_obj;
 
     return obj.flipX;
 }
 
--(void)setFlipY:(BOOL)flipY {
+-(void)setFlipY:(BOOL)flipY
+{
     SuperAnimNode *obj = (SuperAnimNode*)_obj;
     
     obj.flipY = flipY;
 }
 
--(BOOL)getFlipY {
+-(BOOL)getFlipY
+{
     SuperAnimNode *obj = (SuperAnimNode*)_obj;
     
     return obj.flipY;
 }
 
--(void)setSpeedFactor:(float)speedFactor{
+-(void)setSpeedFactor:(float)speedFactor
+{
     SuperAnimNode *obj = (SuperAnimNode*)_obj;
 
     obj.speedFactor = speedFactor;
 }
 
--(float)getSpeedFactor {
+-(float)getSpeedFactor
+{
     SuperAnimNode *obj = (SuperAnimNode*)_obj;
 
     return obj.speedFactor;
 }
+
+-(void)Pause
+{
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+
+    return [obj Pause];
+}
+
+-(void)Resume
+{
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+    
+    return [obj Resume];
+}
+
+-(BOOL) IsPause
+{
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+    
+    return [obj IsPause];
+}
+
+-(BOOL) IsPlaying
+{
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+
+    return [obj IsPlaying];
+}
+
+-(int) GetCurFrame
+{
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+
+    return [obj GetCurFrame];
+}
+
+-(NSString*) GetCurSectionName
+{
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+
+    return [obj GetCurSectionName];
+}
+
+-(BOOL) HasSection:(NSString*) theLabelName
+{
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+
+    return [obj HasSection:theLabelName];
+}
+
+-(void) replaceSprite:(NSString*) theOriginSpriteName newSpriteName:(NSString*) theNewSpriteName
+{
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+
+    [obj replaceSprite:theOriginSpriteName newSpriteName:theNewSpriteName];
+}
+
+-(void) resumeSprite:(NSString*) theOriginSpriteName
+{
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+    
+    [obj resumeSprite:theOriginSpriteName];
+}
+
+-(void) registerTimeEvent:(NSString*)theLabel timeFactor:(float)theTimeFactor timeEventId:(int)theEventId
+{
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+
+    [obj registerTimeEvent:theLabel timeFactor:theTimeFactor timeEventId:theEventId];
+}
+
+-(void) removeTimeEvent:(NSString*) theLabel timeEventId:(int) theEventId
+{
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+
+    [obj removeTimeEvent:theLabel timeEventId:theEventId];
+}
+
+-(void) tryLoadSpriteSheet
+{
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+
+    [obj tryLoadSpriteSheet];
+}
+
+-(void) tryUnloadSpirteSheet
+{
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+
+    [obj tryUnloadSpirteSheet];
+}
+
++(BOOL) LoadAnimFileExt:(const char*) theAbsAnimFile
+{
+    return [SuperAnimNode LoadAnimFileExt:theAbsAnimFile];
+}
+
++(void) UnloadAnimFileExt:(const char*) theAbsAnimFile
+{
+    [SuperAnimNode UnloadAnimFileExt:theAbsAnimFile];
+}
+
+// SuperAnimNodeを削除するための関数
+-(void)removeSprite
+
+{
+    SuperAnimNode *obj = (SuperAnimNode*)_obj;
+
+    [static_scene removeChild:obj];
+    
+    NSLog(@"removeSprite");
+}
+
 
 @end

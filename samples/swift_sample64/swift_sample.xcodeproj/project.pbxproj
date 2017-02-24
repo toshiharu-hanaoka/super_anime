@@ -121,13 +121,14 @@
 		E5180BF81E5453100022B529 /* LICENSE_cocos2d.txt in Resources */ = {isa = PBXBuildFile; fileRef = E5180B861E5453100022B529 /* LICENSE_cocos2d.txt */; };
 		E5180BF91E5453100022B529 /* LICENSE_CocosDenshion.txt in Resources */ = {isa = PBXBuildFile; fileRef = E5180B871E5453100022B529 /* LICENSE_CocosDenshion.txt */; };
 		E5180BFA1E5453100022B529 /* LICENSE_Kazmath.txt in Resources */ = {isa = PBXBuildFile; fileRef = E5180B881E5453100022B529 /* LICENSE_Kazmath.txt */; };
+		E5180BFF1E6024660022B529 /* LI_640_960.png in Resources */ = {isa = PBXBuildFile; fileRef = E5180BFD1E6024660022B529 /* LI_640_960.png */; };
+		E5180C001E6024660022B529 /* LI_640_1136.png in Resources */ = {isa = PBXBuildFile; fileRef = E5180BFE1E6024660022B529 /* LI_640_1136.png */; };
 		E5821C2A1E35FA84004DCCA0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5821C291E35FA84004DCCA0 /* AppDelegate.swift */; };
 		E5821C2C1E35FA84004DCCA0 /* GameScene.sks in Resources */ = {isa = PBXBuildFile; fileRef = E5821C2B1E35FA84004DCCA0 /* GameScene.sks */; };
 		E5821C2E1E35FA84004DCCA0 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5821C2D1E35FA84004DCCA0 /* GameScene.swift */; };
 		E5821C301E35FA84004DCCA0 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5821C2F1E35FA84004DCCA0 /* GameViewController.swift */; };
 		E5821C331E35FA84004DCCA0 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E5821C311E35FA84004DCCA0 /* Main.storyboard */; };
 		E5821C351E35FA84004DCCA0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E5821C341E35FA84004DCCA0 /* Assets.xcassets */; };
-		E5821C381E35FA84004DCCA0 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E5821C361E35FA84004DCCA0 /* LaunchScreen.storyboard */; };
 		E5821C971E38977E004DCCA0 /* SuperAnim.mm in Sources */ = {isa = PBXBuildFile; fileRef = E5821C921E38977E004DCCA0 /* SuperAnim.mm */; };
 		E5821C981E38977E004DCCA0 /* SuperAnimCore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5821C941E38977E004DCCA0 /* SuperAnimCore.cpp */; };
 		E5821C991E38977E004DCCA0 /* SuperAnimNodeV2.mm in Sources */ = {isa = PBXBuildFile; fileRef = E5821C961E38977E004DCCA0 /* SuperAnimNodeV2.mm */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
@@ -389,6 +390,8 @@
 		E5180B861E5453100022B529 /* LICENSE_cocos2d.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE_cocos2d.txt; sourceTree = "<group>"; };
 		E5180B871E5453100022B529 /* LICENSE_CocosDenshion.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE_CocosDenshion.txt; sourceTree = "<group>"; };
 		E5180B881E5453100022B529 /* LICENSE_Kazmath.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE_Kazmath.txt; sourceTree = "<group>"; };
+		E5180BFD1E6024660022B529 /* LI_640_960.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LI_640_960.png; path = swift_sample/LI_640_960.png; sourceTree = "<group>"; };
+		E5180BFE1E6024660022B529 /* LI_640_1136.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LI_640_1136.png; path = swift_sample/LI_640_1136.png; sourceTree = "<group>"; };
 		E5821C261E35FA84004DCCA0 /* swift_sample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = swift_sample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E5821C291E35FA84004DCCA0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		E5821C2B1E35FA84004DCCA0 /* GameScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = GameScene.sks; sourceTree = "<group>"; };
@@ -396,7 +399,6 @@
 		E5821C2F1E35FA84004DCCA0 /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
 		E5821C321E35FA84004DCCA0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		E5821C341E35FA84004DCCA0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		E5821C371E35FA84004DCCA0 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		E5821C391E35FA84004DCCA0 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E5821C421E3603C6004DCCA0 /* swift_sample-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "swift_sample-Bridging-Header.h"; sourceTree = "<group>"; };
 		E5821C911E38977E004DCCA0 /* SuperAnim.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SuperAnim.h; path = SuperAnim/SuperAnim.h; sourceTree = "<group>"; };
@@ -782,6 +784,8 @@
 		E5821C1D1E35FA84004DCCA0 = {
 			isa = PBXGroup;
 			children = (
+				E5180BFD1E6024660022B529 /* LI_640_960.png */,
+				E5180BFE1E6024660022B529 /* LI_640_1136.png */,
 				E5180A801E5452110022B529 /* CoreText.framework */,
 				E59B139C1E39E2D9004A0083 /* OpenGLES.framework */,
 				E58220951E39CABB004DCCA0 /* libz.tbd */,
@@ -809,7 +813,6 @@
 				E5821C2F1E35FA84004DCCA0 /* GameViewController.swift */,
 				E5821C311E35FA84004DCCA0 /* Main.storyboard */,
 				E5821C341E35FA84004DCCA0 /* Assets.xcassets */,
-				E5821C361E35FA84004DCCA0 /* LaunchScreen.storyboard */,
 				E5821C391E35FA84004DCCA0 /* Info.plist */,
 				E59B139E1E3AE1E1004A0083 /* auto_sync_resource */,
 				E5180A821E5453100022B529 /* libs */,
@@ -895,9 +898,10 @@
 				E5180BF91E5453100022B529 /* LICENSE_CocosDenshion.txt in Resources */,
 				E5180BEA1E5453100022B529 /* ChangeLog in Resources */,
 				E5821C2C1E35FA84004DCCA0 /* GameScene.sks in Resources */,
-				E5821C381E35FA84004DCCA0 /* LaunchScreen.storyboard in Resources */,
+				E5180C001E6024660022B529 /* LI_640_1136.png in Resources */,
 				E5180BEB1E5453100022B529 /* CMakeLists.txt in Resources */,
 				E5821C351E35FA84004DCCA0 /* Assets.xcassets in Resources */,
+				E5180BFF1E6024660022B529 /* LI_640_960.png in Resources */,
 				E5821C331E35FA84004DCCA0 /* Main.storyboard in Resources */,
 				E5180BFA1E5453100022B529 /* LICENSE_Kazmath.txt in Resources */,
 			);
@@ -1039,14 +1043,6 @@
 			name = Main.storyboard;
 			sourceTree = "<group>";
 		};
-		E5821C361E35FA84004DCCA0 /* LaunchScreen.storyboard */ = {
-			isa = PBXVariantGroup;
-			children = (
-				E5821C371E35FA84004DCCA0 /* Base */,
-			);
-			name = LaunchScreen.storyboard;
-			sourceTree = "<group>";
-		};
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
@@ -1147,6 +1143,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CLANG_ENABLE_MODULES = YES;
 				INFOPLIST_FILE = swift_sample/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -1161,6 +1158,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CLANG_ENABLE_MODULES = YES;
 				INFOPLIST_FILE = swift_sample/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";

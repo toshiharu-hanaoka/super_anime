@@ -31,7 +31,6 @@
 {
     id _obj;
     id _listener;
-    SKScene *_scene;
 }
 @property (nonatomic,readwrite) BOOL flipX;
 @property (nonatomic,readwrite) BOOL flipY;
@@ -39,8 +38,7 @@
 
 +(SuperAnimNode_swift*)create:(NSString*)theAbsAnimFile
                         theId:(int)theId
-                     listener:(id <SuperAnimNodeDelegate>) theListner
-                        scene:(SKScene*)scene;
+                     listener:(id <SuperAnimNodeDelegate>) theListner;
 //+(void)update:(CFTimeInterval)interval;
 -(void)setPosition:(CGPoint)position;
 -(void)playSection:(NSString*)theLabel
@@ -79,6 +77,9 @@
 
 // 表示を削除するためには以下を呼び出すこと
 -(void)removeSprite;
+// スプライトのサイズを知るための関数
+-(CGSize)getSize;
+
 
 @end
 

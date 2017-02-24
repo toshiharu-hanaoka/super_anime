@@ -135,7 +135,6 @@ static CCScene *static_scene;
 +(SuperAnimNode_swift*)create:(NSString*)theAbsAnimFile
                          theId:(int)theId
                      listener:(id <SuperAnimNodeDelegate>) theListener
-                         scene:(SKScene*)scene
 {
     SuperAnimNode_swift *node = [SuperAnimNode_swift node];
     
@@ -148,18 +147,14 @@ static CCScene *static_scene;
     }
     
     node->_obj = [SuperAnimNode create:theAbsAnimFile id:theId listener:node->_listener];
-    
-    //座標変換のためにsceneを受け取る
-    node->_scene = scene;
-    
+        
     SuperAnimNode *obj = (SuperAnimNode*)node->_obj;
 
     //タッチするようのNode (alpha=0にすれば見えない)
     SKSpriteNode *sprite = [SKSpriteNode spriteNodeWithColor:[UIColor colorWithWhite:1.0 alpha:1.0]
                                                         size:obj.contentSize];
     
-    //sprite.position = CGPointMake(0,0);
-    //sprite.anchorPoint = CGPointMake(0.5,0.5);
+    sprite.name = @"sprite";
     [node addChild:sprite];
     node.zPosition = 1000;
     
@@ -355,5 +350,12 @@ static CCScene *static_scene;
     NSLog(@"removeSprite");
 }
 
+// Spriteのサイズを知るための関数
+-(CGSize)getSize;
+{
+    SKSpriteNode *sprite = (SKSpriteNode*)[self childNodeWithName:@"sprite"];
+    
+    return sprite.frame.size;
+}
 
 @end

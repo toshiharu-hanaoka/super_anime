@@ -72,7 +72,7 @@ class GameScene: SKScene, SuperAnimNodeDelegate {
         // SuperAnimNodeはデバイスの座標系になっているので、swf_viewのサイズから計算
         let WinSize = swf_view.frame.size;
 
-        sprite1 = SuperAnimNode_swift.create(filepath, theId: 1, listener:self, scene: self)
+        sprite1 = SuperAnimNode_swift.create(filepath, theId: 1, listener:self)
         sprite1.position = CGPoint(x: WinSize.width*0.25 ,y: WinSize.height*0.75)
         sprite1.flipX = false;
         sprite1.flipY = false;
@@ -80,7 +80,7 @@ class GameScene: SKScene, SuperAnimNodeDelegate {
         sprite1.registerTimeEvent("idle", timeFactor: 0.5, timeEventId: 1)
         self.addChild(sprite1)
         
-        sprite2 = SuperAnimNode_swift.create(filepath, theId: 1, listener:self, scene: self)
+        sprite2 = SuperAnimNode_swift.create(filepath, theId: 1, listener:self)
         sprite2.position = CGPoint(x: WinSize.width*0.75 ,y: WinSize.height*0.75)
         sprite2.flipX = true;
         sprite2.flipY = false;
@@ -88,7 +88,7 @@ class GameScene: SKScene, SuperAnimNodeDelegate {
         sprite2.registerTimeEvent("idle", timeFactor: 0.5, timeEventId: 2)
         self.addChild(sprite2)
 
-        sprite3 = SuperAnimNode_swift.create(filepath, theId: 1, listener:self, scene: self)
+        sprite3 = SuperAnimNode_swift.create(filepath, theId: 1, listener:self)
         sprite3.position = CGPoint(x: WinSize.width*0.25 ,y: WinSize.height*0.25)
         sprite3.flipX = false;
         sprite3.flipY = true;
@@ -96,7 +96,7 @@ class GameScene: SKScene, SuperAnimNodeDelegate {
         sprite3.registerTimeEvent("idle", timeFactor: 0.5, timeEventId: 3)
         self.addChild(sprite3)
         
-        sprite4 = SuperAnimNode_swift.create(filepath, theId: 1, listener:self, scene: self)
+        sprite4 = SuperAnimNode_swift.create(filepath, theId: 1, listener:self)
         sprite4.position = CGPoint(x: WinSize.width*0.75 ,y: WinSize.height*0.25)
         sprite4.flipX = true;
         sprite4.flipY = true;

@@ -20,7 +20,7 @@
 @end
 
 @protocol SuperAnimNodeDelegate <NSObject>
-
+@optional
 -(void) OnAnimSectionEnd: (int)theId label:(NSString*) theLabelName;
 -(void) OnTimeEvent:(int) theId label:(NSString*)theLabelName eventId:(int) theEventId;
 
@@ -31,6 +31,7 @@
 {
     id _obj;
     id _listener;
+    SKSpriteNode* sprite;
 }
 @property (nonatomic,readwrite) BOOL flipX;
 @property (nonatomic,readwrite) BOOL flipY;

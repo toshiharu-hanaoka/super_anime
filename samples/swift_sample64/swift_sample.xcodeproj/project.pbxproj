@@ -123,6 +123,7 @@
 		E5180BFA1E5453100022B529 /* LICENSE_Kazmath.txt in Resources */ = {isa = PBXBuildFile; fileRef = E5180B881E5453100022B529 /* LICENSE_Kazmath.txt */; };
 		E5180BFF1E6024660022B529 /* LI_640_960.png in Resources */ = {isa = PBXBuildFile; fileRef = E5180BFD1E6024660022B529 /* LI_640_960.png */; };
 		E5180C001E6024660022B529 /* LI_640_1136.png in Resources */ = {isa = PBXBuildFile; fileRef = E5180BFE1E6024660022B529 /* LI_640_1136.png */; };
+		E550B81D1E67E86E002D5459 /* GameScene2.swift in Sources */ = {isa = PBXBuildFile; fileRef = E550B81C1E67E86E002D5459 /* GameScene2.swift */; };
 		E5821C2A1E35FA84004DCCA0 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5821C291E35FA84004DCCA0 /* AppDelegate.swift */; };
 		E5821C2C1E35FA84004DCCA0 /* GameScene.sks in Resources */ = {isa = PBXBuildFile; fileRef = E5821C2B1E35FA84004DCCA0 /* GameScene.sks */; };
 		E5821C2E1E35FA84004DCCA0 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5821C2D1E35FA84004DCCA0 /* GameScene.swift */; };
@@ -392,6 +393,7 @@
 		E5180B881E5453100022B529 /* LICENSE_Kazmath.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = LICENSE_Kazmath.txt; sourceTree = "<group>"; };
 		E5180BFD1E6024660022B529 /* LI_640_960.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LI_640_960.png; path = swift_sample/LI_640_960.png; sourceTree = "<group>"; };
 		E5180BFE1E6024660022B529 /* LI_640_1136.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = LI_640_1136.png; path = swift_sample/LI_640_1136.png; sourceTree = "<group>"; };
+		E550B81C1E67E86E002D5459 /* GameScene2.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GameScene2.swift; sourceTree = "<group>"; };
 		E5821C261E35FA84004DCCA0 /* swift_sample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = swift_sample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E5821C291E35FA84004DCCA0 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		E5821C2B1E35FA84004DCCA0 /* GameScene.sks */ = {isa = PBXFileReference; lastKnownFileType = file.sks; path = GameScene.sks; sourceTree = "<group>"; };
@@ -810,6 +812,7 @@
 				E5821C291E35FA84004DCCA0 /* AppDelegate.swift */,
 				E5821C2B1E35FA84004DCCA0 /* GameScene.sks */,
 				E5821C2D1E35FA84004DCCA0 /* GameScene.swift */,
+				E550B81C1E67E86E002D5459 /* GameScene2.swift */,
 				E5821C2F1E35FA84004DCCA0 /* GameViewController.swift */,
 				E5821C311E35FA84004DCCA0 /* Main.storyboard */,
 				E5821C341E35FA84004DCCA0 /* Assets.xcassets */,
@@ -987,6 +990,7 @@
 				E5180BA21E5453100022B529 /* CCGLProgram.m in Sources */,
 				E5180BD81E5453100022B529 /* ccCArray.m in Sources */,
 				E5180BD31E5453100022B529 /* CCEventDispatcher.m in Sources */,
+				E550B81D1E67E86E002D5459 /* GameScene2.swift in Sources */,
 				E5180BCE1E5453100022B529 /* CCES2Renderer.m in Sources */,
 				E5180BD01E5453100022B529 /* CCTouchDispatcher.m in Sources */,
 				E5180BF61E5453100022B529 /* vec3.c in Sources */,

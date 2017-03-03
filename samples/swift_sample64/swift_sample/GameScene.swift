@@ -31,11 +31,13 @@ class GameScene: SKScene, SuperAnimNodeDelegate {
     override func didMoveToView(view: SKView) {
         
         /* Setup your scene here */
+        self.backgroundColor = SKColor(red: 0.8, green: 0.8, blue: 0.8, alpha: 1.0)
+        
         let myLabel = SKLabelNode(fontNamed:"Chalkduster")
-        myLabel.text = "Hello, World!"
+        myLabel.text = "Next"
         myLabel.fontSize = 45
         myLabel.position = CGPoint(x:CGRectGetMidX(self.frame), y:CGRectGetMidY(self.frame))
-        
+        myLabel.name = "Next"
         self.addChild(myLabel)
 
         //fullpath
@@ -78,30 +80,34 @@ class GameScene: SKScene, SuperAnimNodeDelegate {
         sprite1.flipY = false;
         sprite1.playSection("idle",loop:true)
         sprite1.registerTimeEvent("idle", timeFactor: 0.5, timeEventId: 1)
+        sprite1.name = "sprite1"
         self.addChild(sprite1)
         
-        sprite2 = SuperAnimNode_swift.create(filepath, theId: 1, listener:self)
+        sprite2 = SuperAnimNode_swift.create(filepath, theId: 2, listener:self)
         sprite2.position = CGPoint(x: WinSize.width*0.75 ,y: WinSize.height*0.75)
         sprite2.flipX = true;
         sprite2.flipY = false;
         sprite2.playSection("idle",loop:true)
         sprite2.registerTimeEvent("idle", timeFactor: 0.5, timeEventId: 2)
+        sprite2.name = "sprite2"
         self.addChild(sprite2)
 
-        sprite3 = SuperAnimNode_swift.create(filepath, theId: 1, listener:self)
+        sprite3 = SuperAnimNode_swift.create(filepath, theId: 3, listener:self)
         sprite3.position = CGPoint(x: WinSize.width*0.25 ,y: WinSize.height*0.25)
         sprite3.flipX = false;
         sprite3.flipY = true;
         sprite3.playSection("idle",loop:true)
         sprite3.registerTimeEvent("idle", timeFactor: 0.5, timeEventId: 3)
+        sprite3.name = "sprite3"
         self.addChild(sprite3)
         
-        sprite4 = SuperAnimNode_swift.create(filepath, theId: 1, listener:self)
+        sprite4 = SuperAnimNode_swift.create(filepath, theId: 4, listener:self)
         sprite4.position = CGPoint(x: WinSize.width*0.75 ,y: WinSize.height*0.25)
         sprite4.flipX = true;
         sprite4.flipY = true;
         sprite4.playSection("idle",loop:true)
         sprite4.registerTimeEvent("idle", timeFactor: 0.5, timeEventId: 4)
+        sprite4.name = "sprite4"
         self.addChild(sprite4)
         
         //flashの表示Viewを追加する（これを入れないとflashは表示されない)
@@ -111,7 +117,25 @@ class GameScene: SKScene, SuperAnimNodeDelegate {
     
     override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
        /* Called when a touch begins */
-       sprite1.playSection("active",loop:false);
+        let touchEvent = touches.first!
+        let location = touchEvent.locationInNode(self);
+        let touchNode = self.nodeAtPoint(location);
+        
+        if (touchNode.name != nil) {
+            if (touchNode.name == "Next") {
+                let newScene = GameScene2(size: self.scene!.size)
+                newScene.scaleMode = SKSceneScaleMode.AspectFill
+                self.scene!.view?.presentScene(newScene);
+            } else if (touchNode.name == "sprite1") {
+                sprite1.playSection("active",loop:false);
+            } else if (touchNode.name == "sprite2") {
+                sprite2.playSection("active",loop:false);
+            } else if (touchNode.name == "sprite3") {
+                sprite3.playSection("active",loop:false);
+            } else if (touchNode.name == "sprite4") {
+                sprite4.playSection("active",loop:false);
+            }
+        }
 
     }
    
@@ -122,13 +146,29 @@ class GameScene: SKScene, SuperAnimNodeDelegate {
     //Sceneが破棄されるときにはspreiteを外すこと（removeChildは不要)
     override func willMoveFromView(view: SKView) {
         sprite1.removeSprite()
+        sprite2.removeSprite()
+        sprite3.removeSprite()
+        sprite4.removeSprite()
     }
     
     @objc func OnAnimSectionEnd(theId: Int32, label theLabelName: String!) {
         //NSLog("OnAnimSectionEnd")
-        if (theId==1) {
-            if (theLabelName=="active") {
+        if (theLabelName=="active") {
+            switch(theId) {
+            case 1:
                 sprite1.playSection("idle", loop: true);
+                break;
+            case 2:
+                sprite2.playSection("idle", loop: true);
+                break;
+            case 3:
+                sprite3.playSection("idle", loop: true);
+                break;
+            case 4:
+                sprite4.playSection("idle", loop: true);
+                break;
+            default:
+                break;
             }
         }
     }

@@ -108,12 +108,16 @@ static CCScene *static_scene;
 -(void) OnAnimSectionEnd: (int)theId label:(NSString*) theLabelName
 {
     //NSLog(@"OnAnimSectionEnd");
-    [_delegate OnAnimSectionEnd:theId label:theLabelName];
+    if ([_delegate respondsToSelector:@selector(OnAnimSectionEnd:label:)]) {
+        [_delegate OnAnimSectionEnd:theId label:theLabelName];
+    }
 }
 -(void) OnTimeEvent:(int) theId label:(NSString*)theLabelName eventId:(int) theEventId
 {
     //NSLog(@"OnTimeEvent");
-    [_delegate OnTimeEvent:theId label:theLabelName eventId:theEventId];
+    if ([_delegate respondsToSelector:@selector(OnTimeEvent:label:eventId:)]) {
+        [_delegate OnTimeEvent:theId label:theLabelName eventId:theEventId];
+    }
 }
 
 @end
@@ -151,11 +155,11 @@ static CCScene *static_scene;
     SuperAnimNode *obj = (SuperAnimNode*)node->_obj;
 
     //タッチするようのNode (alpha=0にすれば見えない)
-    SKSpriteNode *sprite = [SKSpriteNode spriteNodeWithColor:[UIColor colorWithWhite:1.0 alpha:1.0]
+    node->sprite = [SKSpriteNode spriteNodeWithColor:[UIColor colorWithWhite:1.0 alpha:0.0]
                                                         size:obj.contentSize];
     
-    sprite.name = @"sprite";
-    [node addChild:sprite];
+    node->sprite.name = @"";
+    [node addChild:node->sprite];
     node.zPosition = 1000;
     
     //_objをつなげる　updateが呼ばれないので呼ばれるようするため。
@@ -350,12 +354,26 @@ static CCScene *static_scene;
     NSLog(@"removeSprite");
 }
 
-// Spriteのサイズを知るための関数
--(CGSize)getSize;
+-(void)dealloc
 {
-    SKSpriteNode *sprite = (SKSpriteNode*)[self childNodeWithName:@"sprite"];
-    
+    //NSLog(@"dealloc");
+}
+
+
+// Spriteのサイズを知るための関数
+-(CGSize)getSize
+{
     return sprite.frame.size;
+}
+
+-(void)setName:(NSString*)name
+{
+    sprite.name = name;
+}
+
+-(NSString*)getName
+{
+    return sprite.name;
 }
 
 @end

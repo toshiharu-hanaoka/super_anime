@@ -386,7 +386,7 @@ inline ccV3F_C4B_T2F_Quad operator*(const SuperAnimMatrix3 &theMatrix3, const cc
 @synthesize speedFactor = mSpeedFactor;
 
 -(void)dealloc{
-	[self tryUnloadSpirteSheet];
+	//[self tryUnloadSpirteSheet]; //これはいらない気がする
 	if (mAnimHandler != NULL) {
 		SuperAnimHandler* anAnimHandler = (SuperAnimHandler*)mAnimHandler;
 		delete anAnimHandler;

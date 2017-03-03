@@ -22,11 +22,9 @@ class GameViewController: UIViewController {
         super.viewDidLoad()
         
         //#### init_cocos2d
-        swf_view = SuperAnimNode_cocos2d.init_gl() //これは画面全体のpixel sizeとなる
-        //self.view.addSubview(cocos_view)
-        //NSLog("%f,%f",cocos_view.frame.height,cocos_view.frame.width);
+        swf_view = SuperAnimNode_cocos2d.init_gl() //これは画面全体のpixel sizeとなるのでSKView/SKSceneのサイズをこれに合わせる
 
-        if let scene = GameScene(fileNamed:"GameScene") {
+        if let scene:GameScene = GameScene(size:view.bounds.size) {
 
             // Configure the view.
             let skView = self.view as! SKView
@@ -38,17 +36,7 @@ class GameViewController: UIViewController {
             skView.ignoresSiblingOrder = true
             
             /* Set the scale mode to scale to fit the window */
-            //### ??これがあると座標系が乱れる。何やっているのだろう?
-            // ※SKSceneはデフォルトで1024 x 768のため、どれを指定しても拡大縮小してしまう。
             scene.scaleMode = .AspectFill
-            //scene.scaleMode = .AspectFit
-            //  scene.scaleMode = .ResizeFill
-            //  scene.scaleMode = .Fill
-            
-            // SKSceneサイズをViewサイズに合わせる
-            // これによって表示時のスケーリングを無くすことができる。
-            scene.size = skView.frame.size; //SKSceneのサイズをskViewに合わせる
-                        
             
             skView.presentScene(scene)
             
